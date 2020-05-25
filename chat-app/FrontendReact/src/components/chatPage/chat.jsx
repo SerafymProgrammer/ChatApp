@@ -1,18 +1,14 @@
 import React, { Component } from "react";
-import ChatService from "../../services/chat.service";
-import InputMessageForm from "./inputMessage";
-import MessageContainer from "./messageContainer";
-import UsersList from "./usersContainer";
-import io from "socket.io-client";
+import InputMessageForm from "./chat-components/inputMessage";
+import MessageContainer from "./chat-components/messageContainer";
+import UsersList from "./chat-components/usersContainer";
 import * as actions from "../../redux/actions/chatActions/chat.actions";
 import * as authActions from "../../redux/actions/authActions/auth.actions";
 import { connect } from "react-redux";
-import moment from "moment";
-import jwt from "jwt-decode";
 import { Container } from "@material-ui/core";
 import { styled } from "@material-ui/core/styles";
-import Header from "./chatHeader";
-import Box from "@material-ui/core/Box";
+import Header from "./chat-components/chatHeader";
+import jwt from 'jwt-decode';
 
 const ChatContainer = styled(Container)({
   background: "#6d81af",
@@ -68,96 +64,85 @@ class ChatPage extends Component {
       usersListMobile: false
     };
   }
-  UNSAFE_componentWillMount() {
-    debugger;
-  }
 
+  componentWillUnmount() {
+    this.props.isConnected(false);
+  }
 
   async componentDidMount() {
     let token = await localStorage.getItem("userToken");
     if (!token) {
-      this.props.history.push("/login");
+      window.location.href = '/login';
       return;
     }
-
-    const handler = e => { this.setState({usersListMobile: e.matches}); if(e.matches) {
+    const decodedUser = jwt(token);
+    window.matchMedia("(max-width: 400px)").addListener((e)=>{ this.setState({usersListMobile: e.matches}); if(e.matches) {
       this.setState({showUsersContainer: false});
-    }};
-    window.matchMedia("(max-width: 400px)").addListener(handler);
+    }});
     await this.props.initConnection();
-    // this.props.socket.on("users", (res) => dispatch(AllUsers(res)));
-    this.props.socket.on("onlineUsers", (res) =>
-      this.props.setOnlineUsers(res)
-    );
-    this.props.socket.on("users", (res) => {
+
+    const {socket} = this.props;
+
+    socket.on("users", (res) => {
       this.props.setOnlineUsers(res);
     });
-    this.props.socket.on("previousMessages", (res) =>
+
+    socket.on("previousMessages", (res) =>
       this.setState({
         messages: res,
       })
     );
-    this.props.socket.on("initialMuteStatus", (IsMute) =>
-      this.props.setIsMuteStatus(IsMute)
-    );
-    this.props.socket.on("mute", (IsMute) => {
-      debugger;
-      console.log(IsMute);
+
+    socket.on("error", (res) =>{
+      alert(res.msg);
+      window.location.href = '/login';
+    });
+
+    socket.on("initialMuteStatus", (IsMute) =>{
+      this.setState({ isMuted: IsMute });
+    });
+
+    socket.on("mute", (IsMute) => {
       this.props.setIsMuteStatus(IsMute);
       this.setState({ isMuted: IsMute });
     });
-    this.props.socket.on("chat", (res) =>
+
+    socket.on("chat", (res) =>
       this.setState({
         messages: [...this.state.messages, res],
       })
     );
 
-    this.props.socket.on("connection", (socket) => {
-      this.props.socket.on("disconnect", (reason) => {
-        localStorage.removeItem("userToken");
-        this.props.history.push("/login");
-      });
-    });
-
-    this.props.socket.on("disconnect", (socket) => {
+    socket.on("disconnect", (socket) => {
       localStorage.removeItem("userToken");
-      this.props.history.push("/login");
+      window.location.href = '/login';
     });
-    this.props.socket.on("disconnected", (reason) => {});
-    const decodedUser = jwt(token);
+    
     this.colorNickName = decodedUser.nickNameColor;
     this.setState({
       isAdmin: decodedUser.isAdmin,
       currentUser: decodedUser.nickName,
     });
-    // this.props.socket.emit("onlineUsers", token);
 
     this.props.isConnected(true);
   }
 
-  async setMuteStatus(user) {
+  setMuteStatus(user) {
     this.props.socket.emit("mute", user.id);
   }
 
-  async setBan(user) {
+  setBan(user) {
     this.props.socket.emit("ban", user.id);
   }
-  handleNewUserMessage = (newMessage) => {
-    console.log(`New message incomig! ${newMessage}`);
-    // Now send the message throught the backend API
-  };
 
-  async sendMsg(message) {
-    this.setState({
-      messages: [...this.state.messages, message],
-    });
+  sendMsg(message) {
     this.props.socket.emit("chat", JSON.stringify(message));
   }
 
   async logout() {
     await localStorage.removeItem("userToken");
     this.props.socket.disconnect(true);
-    this.props.history.push("/login");
+    window.location.href = '/login';
   }
 
   render() {
@@ -165,7 +150,7 @@ class ChatPage extends Component {
 
     const { isAdmin, currentUser, showUsersContainer, usersListMobile} = this.state;
 
-    return (
+    return isConnected && onlineUsers.length>0 ? (
       <Container style={{ display: "flex", flexDirection: "column" }}>
         <Header
           username={currentUser}
@@ -190,14 +175,13 @@ class ChatPage extends Component {
           <MessageContainer
             messages={this.state.messages}
             username={this.state.currentUser}
-            colorNickName={this.colorNickName}
           />
         </ChatContainer>
         {!this.state.isMuted ? (
           <InputMessageForm handleSubmit={(message) => this.sendMsg(message)} />
         ) : null}
       </Container>
-    );
+    ) : null;
     // isConnected && onlineUsers.length > 0 ?
 
     //  : null;

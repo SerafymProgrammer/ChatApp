@@ -1,7 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Message } from '../models/message.model';
 import { ChatRepository } from '../repositories/chat.repository';
-import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ChatService {
@@ -16,8 +15,6 @@ export class ChatService {
   }
 
   async createNewMessage(msg: any) {
-    //  tslint:disable-next-line:variable-name
-
     return await this.chatRepository.createNewMessage(msg);
   }
 }

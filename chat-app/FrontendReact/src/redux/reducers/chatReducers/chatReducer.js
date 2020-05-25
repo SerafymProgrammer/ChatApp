@@ -1,5 +1,3 @@
-
-
 const initialState = {
   onlineUsers: [],
   allUsers: [],
@@ -22,26 +20,26 @@ export default function chatReducer(state = initialState, action) {
         allUsers: action.allUsers,
       };
 
-      case "IS_CONNECTED":
-        return {
-          ...state,
-          isConnected: action.isConnected,
-        };
-        case "SET_SOCKET":
-          return {
-            ...state,
-            socket: action.socket,
-          };
-          case "ALL_MESSAGES":
-            return {
-              ...state,
-              messages: action.messages,
-            };
-            case "IS_MUTED":
-              return {
-                ...state,
-                messages: action.messages,
-              };
+    case "IS_CONNECTED":
+      return {
+        ...state,
+        isConnected: action.isConnected,
+      };
+    case "SET_SOCKET":
+      return {
+        ...state,
+        socket: action.socket,
+      };
+    case "ALL_MESSAGES":
+      return {
+        ...state,
+        messages: action.messages,
+      };
+    case "IS_MUTED":
+      return {
+        ...state,
+        messages: action.messages,
+      };
     default:
       return state;
   }

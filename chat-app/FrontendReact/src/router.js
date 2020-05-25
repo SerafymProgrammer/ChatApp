@@ -5,9 +5,8 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
 } from "react-router-dom";
-import SignIn from './components/auth/SignIn'
+import SignIn from './components/authPage/SignIn'
 import ChatPage from './components/chatPage/chat'
 import Home from './components/home'
 

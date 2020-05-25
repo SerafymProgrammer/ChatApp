@@ -30,12 +30,14 @@ module.exports = {
         type: Sequelize.BOOLEAN
       },
       createdAt: {
+        defaultValue: new Date(),
         allowNull: false,
         type: Sequelize.DATE
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: new Date(),
       }
     });
   },

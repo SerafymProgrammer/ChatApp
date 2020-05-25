@@ -1,7 +1,4 @@
 import React, { Component } from 'react';
-// The CSS can be viewed at https://github.com/sohamkamani/react-chat-example/blob/master/src/TextBar.css
-
-import {AccountCircle, VpnKey} from '@material-ui/icons/AccountCircle';
 import {Redirect} from 'react-router-dom';
 class Home extends Component {
   constructor (props) {
@@ -18,13 +15,11 @@ class Home extends Component {
     } else {
         this.setState({userToken: 'none'})
     }
-
   }
 
  condRender() {
-     
-      if(this.state.userToken!=='none'){
-          return <Redirect to={`/login`} />;
+      if(this.state.userToken&&this.state.userToken!=='none'){
+          return <Redirect to={`/chat`} />;
       } else { 
         return <Redirect to={`/login`} />;
       }
@@ -40,13 +35,7 @@ class Home extends Component {
     }
   }
   render () {
-
-    const sendMessage = this.sendMessage.bind(this)
-    const sendMessageIfEnter = this.sendMessageIfEnter.bind(this)
-
-
-    return this.state.userToken ? this.condRender() : null;
-    
+    return this.state.userToken ? this.condRender() : <div>Error loading page</div>; 
   }
 }
 

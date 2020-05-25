@@ -1,7 +1,21 @@
-import { Table, Column, Model, PrimaryKey, AutoIncrement, BelongsToMany } from 'sequelize-typescript';
+import { Table, Column, Model, PrimaryKey, AutoIncrement } from 'sequelize-typescript';
+
+export interface User extends Model<User>{
+  id: number;
+  nickName: string;
+  password: string;
+  nickNameColor: string;
+  isAdmin: boolean;
+  onlineStatus: boolean;
+  isMuted: boolean;
+  isBaned: boolean;  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 
 @Table
-export class User extends Model<User> {
+export class Users extends Model<User> {
   @PrimaryKey
   @AutoIncrement
   @Column
@@ -27,4 +41,10 @@ export class User extends Model<User> {
 
   @Column
   isBaned: boolean;  
+  
+  @Column
+  createdAt: Date = new Date();
+
+  @Column
+  updatedAt: Date = new Date(); 
 }

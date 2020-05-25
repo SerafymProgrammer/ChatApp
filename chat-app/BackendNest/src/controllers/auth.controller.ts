@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Get, Put, Delete, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Put,
+  Delete,
+  Param,
+} from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { User } from '../models/users.model';
 import * as bcrypt from 'bcrypt';
@@ -6,31 +14,33 @@ import { JwtService } from '@nestjs/jwt';
 
 @Controller('auth')
 export class AuthController {
+  constructor(
+    private authService: AuthService,
+    private jwtService: JwtService,
+  ) {}
 
-    constructor(private authService: AuthService,
-                private jwtService: JwtService) { }
+  @Post('login')
+  async login(@Body() user: User) {
+    return this.authService.login(user).then(async (userData: any) => {
+      if (userData === 'Baned') {
+        return { status: 500, msg: 'You are baned' };
+      }
 
-    @Post('login')
-    async login(@Body() user: User) {
-        return this.authService.login(user).then(async (userData: User) => {
-            if (!userData) {
-                let token;
-                await this.authService.register(user);
-                await this.authService.login(user).then(async (userData: User) => {
-                    token = this.authService.generateTokenForUser(userData);
-                })
-                return token;
-            }
-            const isTruePassword = await bcrypt.compare(user.password, userData.password);
-            if (!isTruePassword) {
-                return;
-            }
-            return this.authService.generateTokenForUser(userData);
+      if (userData === 'Passwords mismatch') {
+        return { status: 500, msg: 'Passwords mismatch' };
+      }
+
+      if (userData === '404') {
+        let token;
+        await this.authService.register(user);
+        await this.authService.login(user).then(async (userData: User) => {
+          token = await this.authService.generateTokenForUser(userData);
         });
-    }
+        return Object.assign({ status: 200 }, token);
+      }
 
-    @Post('register')
-    async register(@Body() user: User): Promise<any> {
-        return this.authService.register(user);
-    }
+      let token = await this.authService.generateTokenForUser(userData); 
+      return Object.assign({ status: 200 }, token);
+    });
+  }
 }

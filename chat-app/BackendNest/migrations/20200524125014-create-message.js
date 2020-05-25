@@ -14,16 +14,21 @@ module.exports = {
       authorMessage: {
         type: Sequelize.STRING
       },
+      colorAuthorName: {
+        type: Sequelize.STRING
+      },
       timeMessage: {
         type: Sequelize.STRING
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: new Date(),
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: new Date(),
       }
     });
   },

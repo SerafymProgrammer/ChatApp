@@ -7,6 +7,7 @@ export interface Environment {
     dialectOptions?: any;
     host?: string;
     port?: number;
+    pool?:any;
     username?: string;
     password?: string;
     database?: string;

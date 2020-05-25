@@ -3,8 +3,8 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.bulkInsert('Users', [{
-      nickName: 'John',
-      password: 'Doe',
+      nickName: 'Admin',
+      password:  '$2y$10$mPfXKl31b2P2wcaeRQWf4Owg6L22cPV4jzEPy67SqMq5nbgY.gnOa',
       nickNameColor: '#000',
       isAdmin: true,
       onlineStatus: false,

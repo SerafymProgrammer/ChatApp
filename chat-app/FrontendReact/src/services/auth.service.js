@@ -10,29 +10,4 @@ export default class AuthService {
         body: JSON.stringify(user)
       })
     };
-  
-    // static getOneDay = (dayNumber) => {
-    //   return fetch(
-    //     environments.jsonServerUrl + '/trainingSchedule' + '/' + dayNumber,
-    //     {
-    //       method: 'GET',
-    //     },
-    //   );
-    // };
-  
-    // static updateExercisesOfSelectedDay = (dayNumber, updatedExercisesList) => {
-    //   return fetch(
-    //     environments.jsonServerUrl + '/trainingSchedule' + '/' + dayNumber,
-    //     {
-    //       method: 'PUT',
-    //       body: JSON.stringify({
-    //         id: dayNumber,
-    //         exercises: updatedExercisesList,
-    //       }),
-    //       headers: {
-    //         'Content-Type': 'application/json'
-    //       },
-    //     },
-    //   );
-    // };
   }

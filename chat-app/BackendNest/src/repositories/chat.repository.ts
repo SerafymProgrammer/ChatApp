@@ -1,48 +1,25 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { Message} from '../models/message.model';
-
-// @EntityRepository(Book)
+import { Messages } from '../models/message.model';
 
 @Injectable()
 export class ChatRepository {
-    constructor(@Inject('CHAT_REPOSITORY') private chatRepository: typeof Message) {
-    }
+  constructor(
+    @Inject('CHAT_REPOSITORY') private chatRepository: typeof Messages,
+  ) {}
 
-    async getMessages(): Promise<Message[]> {
-        return await this.chatRepository.findAll<Message>();
-    }
+  async getMessages(): Promise<Messages[]> {
+    return await this.chatRepository.findAll<Messages>();
+  }
 
-    async getMessagesByAuthor(authorName): Promise<Message[]> {
-        return await this.chatRepository.findAll<Message>({
-            where: {
-                authorMessage: authorName
-            }
-        });
-    }
+  async getMessagesByAuthor(authorName): Promise<Messages[]> {
+    return await this.chatRepository.findAll<Messages>({
+      where: {
+        authorMessage: authorName,
+      },
+    });
+  }
 
-    // tslint:disable-next-line:variable-name
-    // async getUser(_id: number): Promise<User> {
-    //     return await this.usersRepository.findOne({
-    //         where: { id: _id },
-    //     });
-    // }
-
-    // // tslint:disable-next-line:variable-name
-    // async getUserByNickName(nickName: string): Promise<User> {
-    //     const user = await this.usersRepository.findOne({
-    //         where: { nickName: nickName },
-    //     });
-    //     return user;
-    // }
-    async createNewMessage(msg: any) {
-        return await this.chatRepository.create(msg);
-    }
-    // tslint:disable-next-line:variable-name
-    // async updateUser(_id: number, user: User) {
-    //     return await this.usersRepository.update(user, {where: {id: _id}} );
-    // }
-    // // tslint:disable-next-line:variable-name
-    // async deleteUser(_id: number) {
-    //     return await  this.usersRepository.destroy({where: {id: _id}});
-    // }
+  async createNewMessage(msg: any) {
+    return await this.chatRepository.create(msg);
+  }
 }

@@ -5,7 +5,6 @@ import {
   RequestMethod,
 } from '@nestjs/common';
 
-import { UsersController } from './controllers/users.controller';
 import { UsersService } from './services/users.service';
 import { LoggerMiddleware } from './common/logger.middleware';
 import { AuthService } from './services/auth.service';
@@ -27,19 +26,16 @@ import { chatProviders } from './providers/chat.providers';
       secret: 'sdfaasad',
     }),
   ],
-  controllers: [UsersController, AuthController],
+  controllers: [AuthController],
   providers: [
     AppGateway,
 
     UsersService,
-
     AuthService,
-
     ChatService,
     HttpStrategy,
 
     UsersRepository,
-
     ChatRepository,
 
     ...databaseProviders,
