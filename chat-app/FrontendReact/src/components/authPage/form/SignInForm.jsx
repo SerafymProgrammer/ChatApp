@@ -20,7 +20,7 @@ class SignInForm extends Component {
       return true;
     });
     ValidatorForm.addValidationRule("notAllowedSpecialSymbols", (value) => {
-      if (/[^A-zА-яЁё0-9)]/.test(value)) {
+      if (/[^A-zА-яЁё0-9]/.test(value)) {
         return false;
       }
       return true;
@@ -28,7 +28,6 @@ class SignInForm extends Component {
   }
 
   componentWillUnmount() {
-    // remove rule when it is not needed
     ValidatorForm.removeValidationRule("moreThanThreeChar");
     ValidatorForm.removeValidationRule("notAllowedSpecialSymbols");
   }
@@ -95,7 +94,7 @@ class SignInForm extends Component {
           disabled={isFetching}
           margin="normal"
         >
-          {isFetching && <CircularProgress size={20} />} Save
+          {isFetching && <CircularProgress size={20} />} Sign In
         </Button>
       </ValidatorForm>
     );

@@ -16,37 +16,31 @@ const ChatContainer = styled(Container)({
   flexDirection: "row-reverse",
   margin: 0,
   padding: 0,
-  height: 815,
+  height: 800,
   position: 'relative',
   maxHeight: 1000,
-  ["@media (max-height:900px)"]: {
-    // eslint-disable-line no-useless-computed-key
-    height: 715,
+  "@media (max-height:900px)": {
+    height: 700,
     maxHeight: 900,
   },
-  ["@media (max-height:800px)"]: {
-    // eslint-disable-line no-useless-computed-key
-    height: 615,
+  "@media (max-height:800px)": {
+    height: 600,
     maxHeight: 800,
   },
-  ["@media (max-height:700px)"]: {
-    // eslint-disable-line no-useless-computed-key
-    height: 515,
+  "@media (max-height:700px)": {
+    height: 500,
     maxHeight: 700,
   },
-  ["@media (max-height:600px)"]: {
-    // eslint-disable-line no-useless-computed-key
-    height: 415,
+  "@media (max-height:600px)": {
+    height: 400,
     maxHeight: 600,
   },
-  ["@media (max-height:500px)"]: {
-    // eslint-disable-line no-useless-computed-key
-    height: 315,
+  "@media (max-height:500px)": {
+    height: 300,
     maxHeight: 500,
   },
-  ["@media (max-height:400px)"]: {
-    // eslint-disable-line no-useless-computed-key
-    height: 250,
+  "@media (max-height:400px)": {
+    height: 200,
     maxHeight: 400,
   },
 });
@@ -76,9 +70,7 @@ class ChatPage extends Component {
       return;
     }
     const decodedUser = jwt(token);
-    window.matchMedia("(max-width: 400px)").addListener((e)=>{ this.setState({usersListMobile: e.matches}); if(e.matches) {
-      this.setState({showUsersContainer: false});
-    }});
+    window.matchMedia("(max-width: 400px)").addListener((e)=>{ this.setState({usersListMobile: e.matches}); });
     await this.props.initConnection();
 
     const {socket} = this.props;
@@ -146,8 +138,8 @@ class ChatPage extends Component {
   }
 
   render() {
-    const { isConnected, onlineUsers } = this.props;
 
+    const { isConnected, onlineUsers } = this.props;
     const { isAdmin, currentUser, showUsersContainer, usersListMobile} = this.state;
 
     return isConnected && onlineUsers.length>0 ? (
@@ -182,9 +174,6 @@ class ChatPage extends Component {
         ) : null}
       </Container>
     ) : null;
-    // isConnected && onlineUsers.length > 0 ?
-
-    //  : null;
   }
 }
 

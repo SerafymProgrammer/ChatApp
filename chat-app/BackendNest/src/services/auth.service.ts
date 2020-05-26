@@ -13,13 +13,6 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  public async comparePasswords(
-    passwordLogin,
-    passwordReally,
-  ): Promise<boolean> {
-    return bcrypt.compare(passwordLogin, passwordReally);
-  }
-
   private async validateUser(userData: User): Promise<any> {
     try {
       const { nickName } = userData;
@@ -32,7 +25,7 @@ export class AuthService {
         throw new Error('Baned');
       }
 
-      const isTruePassword = this.comparePasswords(userData.password, user.password)
+      const isTruePassword = await bcrypt.compare(userData.password, user.password);
       if (!isTruePassword) {
         throw new Error('Passwords mismatch');
       }

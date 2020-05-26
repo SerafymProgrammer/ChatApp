@@ -8,16 +8,14 @@ import * as actions from "../../redux/actions/authActions/auth.actions";
 import BoxCenter from "./UI/box/Center";
 import randomColor from "randomcolor";
 import { getRandomInt } from "../../services/helpers";
+import {colorsHues} from '../../constants'; 
 
-const colorsHues = ["red", "orange", "yellow", "purple", "green"];
 
 class SignIn extends Component {
   constructor(props) {
     super(props);
 
-    this.state = {
-      didInvalidate: false,
-    };
+    this.state = {};
   }
 
   async componentDidMount() {
@@ -29,10 +27,6 @@ class SignIn extends Component {
   }
 
   login({ id, username, password }) {
-    this.setState((state) => ({
-      isFetching: true,
-      didInvalidate: false,
-    }));
 
     this.props
       .signIn({
@@ -45,13 +39,13 @@ class SignIn extends Component {
         }),
       })
       .catch((ex) => {
-        console.log(ex);
+        alert(ex.message);
       });
   }
 
   componentDidUpdate(prevProps) {
     if (
-      prevProps.isLoggedIn != this.props.isLoggedIn &&
+      prevProps.isLoggedIn !== this.props.isLoggedIn &&
       this.props.isLoggedIn
     ) {
       window.location.href = "/chat";

@@ -12,13 +12,9 @@ export class UsersRepository {
   }
 
   async getUser(_id: number): Promise<Users> {
-    try {
-      return await this.usersRepository.findOne({
-        where: { id: _id },
-      });
-    } catch (e) {
-      console.log(e);
-    }
+    return await this.usersRepository.findOne({
+      where: { id: _id },
+    });
   }
 
   async getUserByNickName(nickName: string): Promise<Users> {
@@ -40,13 +36,9 @@ export class UsersRepository {
   }
 
   async updateUser(_id: number, fieldsUpdated) {
-    try {
-      return await this.usersRepository.update(fieldsUpdated, {
-        returning: true,
-        where: { id: _id },
-      });
-    } catch (e) {
-      console.log(e);
-    }
+    return await this.usersRepository.update(fieldsUpdated, {
+      returning: true,
+      where: { id: _id },
+    });
   }
 }

@@ -6,7 +6,7 @@ import withStyles from '@material-ui/core/styles/withStyles';
 const styles = theme => ({
   main: {
     width: 'auto',
-    display: 'block', // Fix IE 11 issue.
+    display: 'block',
     marginLeft: theme.spacing.unit * 3,
     marginRight: theme.spacing.unit * 3,
     [theme.breakpoints.up(400 + theme.spacing.unit * 3 * 2)]: {
@@ -24,11 +24,11 @@ const styles = theme => ({
   },
   avatar: {
     margin: theme.spacing.unit,
-    backgroundColor: theme.palette.secondary.main,
+   // backgroundColor: theme.palette.secondary.main,
   },
   text: {
     textAlign: 'center'
-  }
+  },
 })
 
 const BoxCenter = ({classes, children}) => {
@@ -40,7 +40,6 @@ const BoxCenter = ({classes, children}) => {
           {children}
         </Paper>
       </main>
-      <p className={classes.text}>Build with <span role="img" aria-label="Love">❤️</span> by the <a href="https://material-ui.com">Material-UI</a></p>
     </div>
   )
 }

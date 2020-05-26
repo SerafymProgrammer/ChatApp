@@ -2,14 +2,9 @@ import {
   Controller,
   Post,
   Body,
-  Get,
-  Put,
-  Delete,
-  Param,
 } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { User } from '../models/users.model';
-import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
 @Controller('auth')
@@ -39,7 +34,7 @@ export class AuthController {
         return Object.assign({ status: 200 }, token);
       }
 
-      let token = await this.authService.generateTokenForUser(userData); 
+      const token = await this.authService.generateTokenForUser(userData);
       return Object.assign({ status: 200 }, token);
     });
   }

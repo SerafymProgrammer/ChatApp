@@ -6,14 +6,11 @@ import ListItemText from "@material-ui/core/ListItemText";
 import ListSubheader from "@material-ui/core/ListSubheader";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
-import 'react-perfect-scrollbar/dist/css/styles.css';
-import PerfectScrollbar from 'react-perfect-scrollbar'
 
 const useStyles = makeStyles((theme) => ({
   root: {
     width: "100%",
     maxWidth: 360,
-    backgroundColor: theme.palette.background.paper,
     position: "relative",
     height: 'avalaible',
     maxHeight: 'inherit',
@@ -22,10 +19,6 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: "#eabf7d8c",
     top: 0,
     left: 0,
-    "@media (max-height:600px)": {
-      height: 400,
-      maxHeight: 500,
-    },
   },
   ul: {
     backgroundColor: "#eabf7d8c",
@@ -57,7 +50,7 @@ export default function UsersList(props) {
       style={showUsersContainer ? 
       Object.assign({display: 'block'}, 
       usersListMobile ? 
-      {position: 'absolute', backgroundColor: "#abd28c", height: 300} : 
+      {position: 'absolute', backgroundColor: "#8cd2b5", height: 300} : 
       {position: 'initial'}) : 
       {display: 'none'}}>
       {arr.map((status, index) => (

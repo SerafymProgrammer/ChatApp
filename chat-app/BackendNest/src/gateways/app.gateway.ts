@@ -1,13 +1,11 @@
 import {
   SubscribeMessage,
   WebSocketGateway,
-  OnGatewayInit,
-  WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { Logger, Injectable } from '@nestjs/common';
-import { Socket, Server } from 'socket.io';
+import { Injectable } from '@nestjs/common';
+import { Socket } from 'socket.io';
 import { AuthService } from '../services/auth.service';
 import { UsersService } from '../services/users.service';
 import { ChatService } from '../services/chat.service';
@@ -15,25 +13,14 @@ import moment = require('moment');
 
 @Injectable()
 @WebSocketGateway()
-export class AppGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-  @WebSocketServer()
-  server: Server;
-  @WebSocketServer()
-  socket: Socket;
-  clients = new Map();
-
-  private logger: Logger = new Logger('AppGateway');
+export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  private clients = new Map();
 
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
     private readonly chatService: ChatService,
   ) {}
-
-  afterInit(server: Server) {
-    this.logger.log('Init');
-  }
 
   async handleConnection(client: Socket, ...args: any[]) {
     const user = await this.authService.validateUserByToken(
@@ -49,12 +36,11 @@ export class AppGateway
     }
     await this.usersService.updateUser(user.id, { onlineStatus: true });
     const allUsers = await this.usersService.getUsers();
-    const onlineUsers = allUsers.filter(user => user.onlineStatus === true);
     const userForMuteStatus = await this.usersService.getUser(user.id);
     const allMessages = await this.chatService.getMessages();
 
     client.broadcast.emit('users', allUsers);
-    client.emit('users', user.isAdmin ? allUsers : onlineUsers);
+    client.emit('users', allUsers);
     client.emit('initialMuteStatus', userForMuteStatus.isMuted);
     client.emit('previousMessages', allMessages);
   }
@@ -80,10 +66,11 @@ export class AppGateway
       msg.authorMessage,
     );
     const lastMsg = allMessageByClient[allMessageByClient.length - 1];
-    const author = await this.usersService.getUserByNickName(
-      msg.authorMessage,
-    ); 
-    msg = Object.assign(msg, { timeMessage: moment().toString(), colorAuthorName: author.nickNameColor });
+    const author = await this.usersService.getUserByNickName(msg.authorMessage);
+    msg = Object.assign(msg, {
+      timeMessage: moment().toString(),
+      colorAuthorName: author.nickNameColor,
+    });
 
     if (allMessageByClient.length === 0) {
       this.chatService.createNewMessage(msg);
@@ -102,19 +89,15 @@ export class AppGateway
 
   @SubscribeMessage('mute')
   async onMute(client, id) {
-    try {
-      const socketUserForMute = this.clients.get(id);
-      const userForMuteStatus = await this.usersService.getUser(id);
-      await this.usersService.updateUser(userForMuteStatus.id, {
-        isMuted: !userForMuteStatus.isMuted,
-      });
-      const allUsers = await this.usersService.getUsers();
-      client.emit('users', allUsers);
-      if (socketUserForMute) {
-        socketUserForMute.emit('mute', !userForMuteStatus.isMuted);
-      }
-    } catch (err) {
-      console.log(err);
+    const socketUserForMute = this.clients.get(id);
+    const userForMuteStatus = await this.usersService.getUser(id);
+    await this.usersService.updateUser(userForMuteStatus.id, {
+      isMuted: !userForMuteStatus.isMuted,
+    });
+    const allUsers = await this.usersService.getUsers();
+    client.emit('users', allUsers);
+    if (socketUserForMute) {
+      socketUserForMute.emit('mute', !userForMuteStatus.isMuted);
     }
   }
 

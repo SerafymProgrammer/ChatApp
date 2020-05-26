@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { User } from '../models/users.model';
 import { UsersRepository } from '../repositories/users.repository';
 import * as bcrypt from 'bcrypt';
@@ -25,8 +25,9 @@ export class UsersService {
   }
 
   async createUser(user: User) {
-    user.password = await bcrypt.hash(user.password, this.saltRounds);
-    return this.usersRepository.createUser(user);
+    const newPassword =  await bcrypt.hash(user.password, this.saltRounds);
+    const newUser = Object.assign({}, user);
+    return this.usersRepository.createUser(Object.assign(newUser, {password: newPassword}));
   }
 
   async updateUser(_id: number, fiedsUpdated) {
