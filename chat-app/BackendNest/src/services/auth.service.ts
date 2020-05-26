@@ -5,6 +5,8 @@ import { UsersService } from './users.service';
 import * as bcrypt from 'bcrypt';
 import jwtDecode = require('jwt-decode');
 
+export const VALIDATE_BANNED = 'Baned';
+
 @Injectable()
 export class AuthService {
 
@@ -14,32 +16,37 @@ export class AuthService {
   ) {}
 
   private async validateUser(userData: User): Promise<any> {
-    try {
+    // try {
       const { nickName } = userData;
       const user = await this.usersService.getUserByNickName(nickName);
 
-      if(!user) {
-        throw new Error('404');
+      if(!user || user.isBaned) {
+        return false; //'404';
+        // throw new Error('404');
       }
       if (user.isBaned) {
-        throw new Error('Baned');
+        return VALIDATE_BANNED;
+        //throw new Error('Baned');
       }
 
       const isTruePassword = await bcrypt.compare(userData.password, user.password);
+
       if (!isTruePassword) {
-        throw new Error('Passwords mismatch');
+        return false; ///'Passwords mismatch';
+        //throw new Error('Passwords mismatch');
       }
+
       return user;
-    } catch (e) {
-      return e.message;
-    }
+    // } catch (e) {
+      // return e.message;
+    // }
   }
 
   public async generateTokenForUser(userData: User) {
-    const accessToken = {
-      userToken: this.jwtService.sign(JSON.stringify(userData)),
-    };
-    return accessToken;
+    // const accessToken = {
+    //   userToken: this.jwtService.sign(JSON.stringify(userData)),
+    // };
+    return this.jwtService.sign(JSON.stringify(userData));
   }
 
   public async validateUserByToken(token) {

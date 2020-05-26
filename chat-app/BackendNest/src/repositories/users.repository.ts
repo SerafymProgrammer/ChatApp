@@ -7,12 +7,12 @@ export class UsersRepository {
     @Inject('USERS_REPOSITORY') private usersRepository: typeof Users,
   ) {}
 
-  async getUsers(): Promise<Users[]> {
-    return await this.usersRepository.findAll<Users>();
+  public getUsers(): Promise<Users[]> {
+    return this.usersRepository.findAll<Users>();
   }
 
-  async getUser(_id: number): Promise<Users> {
-    return await this.usersRepository.findOne({
+  getUser(_id: number): Promise<Users> {
+    return  this.usersRepository.findOne({
       where: { id: _id },
     });
   }
@@ -32,7 +32,7 @@ export class UsersRepository {
   }
 
   async createUser(user: Users) {
-    return await this.usersRepository.create(user);
+    return await this.usersRepository.create({id: null, ...user});
   }
 
   async updateUser(_id: number, fieldsUpdated) {

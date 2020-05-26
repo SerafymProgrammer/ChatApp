@@ -26,8 +26,12 @@ export class UsersService {
 
   async createUser(user: User) {
     const newPassword =  await bcrypt.hash(user.password, this.saltRounds);
-    const newUser = Object.assign({}, user);
-    return this.usersRepository.createUser(Object.assign(newUser, {password: newPassword}));
+    //const newUser = {...user}; //Object.assign({}, user);
+    return this.usersRepository.createUser({
+      ...user, 
+      id: null,
+      password: newPassword
+    });
   }
 
   async updateUser(_id: number, fiedsUpdated) {

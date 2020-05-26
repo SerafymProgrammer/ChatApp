@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import { ValidatorForm, TextValidator } from "react-material-ui-form-validator";
-import jwt from "jwt-decode";
 import IconButton from "@material-ui/core/IconButton";
 import SendIcon from "@material-ui/icons/Send";
 
@@ -42,15 +41,7 @@ class InputMessageForm extends Component {
   };
 
   handleSubmit = () => {
-    let token = localStorage.getItem("userToken");
-    const decodedUser = jwt(token);
-    let newMsg = {
-      id: null,
-      textMessage: this.state.message,
-      authorMessage: decodedUser.nickName,
-    };
-    this.reset();
-    this.props.handleSubmit(newMsg);
+    this.props.handleSubmit(this.state.message);
   };
 
   render() {

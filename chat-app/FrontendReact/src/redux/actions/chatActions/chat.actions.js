@@ -18,13 +18,6 @@ export function setSocket(socket) {
   };
 }
 
-export function allOnlineUsers(onlineUsers) {
-  return {
-    type: "ONLINE_USERS",
-    onlineUsers,
-  };
-}
-
 export function AllUsers(allUsers) {
   return {
     type: "ALL_USERS",
@@ -46,9 +39,3 @@ export function allMessages(messages) {
   };
 }
 
-export function setIsMuteStatus(isMuted) {
-  return {
-    type: "IS_MUTED",
-    isMuted,
-  };
-}

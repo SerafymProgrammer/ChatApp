@@ -14,7 +14,6 @@ import {colorsHues} from '../../constants';
 class SignIn extends Component {
   constructor(props) {
     super(props);
-
     this.state = {};
   }
 
@@ -30,7 +29,6 @@ class SignIn extends Component {
 
     this.props
       .signIn({
-        id: null,
         nickName: username,
         password: password,
         nickNameColor: randomColor({

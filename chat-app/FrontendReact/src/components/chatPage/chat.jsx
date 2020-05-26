@@ -76,7 +76,7 @@ class ChatPage extends Component {
     const {socket} = this.props;
 
     socket.on("users", (res) => {
-      this.props.setOnlineUsers(res);
+      this.props.setUsers(res);
     });
 
     socket.on("previousMessages", (res) =>
@@ -123,12 +123,12 @@ class ChatPage extends Component {
     this.props.socket.emit("mute", user.id);
   }
 
-  setBan(user) {
-    this.props.socket.emit("ban", user.id);
+  setBan(id) {
+    this.props.socket.emit("ban", id);
   }
 
   sendMsg(message) {
-    this.props.socket.emit("chat", JSON.stringify(message));
+    this.props.socket.emit("chat", message);
   }
 
   async logout() {
@@ -139,10 +139,10 @@ class ChatPage extends Component {
 
   render() {
 
-    const { isConnected, onlineUsers } = this.props;
+    const { isConnected, allUsers } = this.props;
     const { isAdmin, currentUser, showUsersContainer, usersListMobile} = this.state;
 
-    return isConnected && onlineUsers.length>0 ? (
+    return isConnected && allUsers.length>0 ? (
       <Container style={{ display: "flex", flexDirection: "column" }}>
         <Header
           username={currentUser}
@@ -156,7 +156,7 @@ class ChatPage extends Component {
         />
         <ChatContainer>
           <UsersList
-            users={onlineUsers}
+            users={allUsers}
             isAdmin={isAdmin}
             userName={currentUser}
             setMuteStatus={(user) => this.setMuteStatus(user)}
@@ -180,20 +180,17 @@ class ChatPage extends Component {
 function mapStateToProps(state) {
   return {
     isConnected: state.chatReducer.isConnected,
-    onlineUsers: state.chatReducer.onlineUsers,
+    allUsers: state.chatReducer.allUsers,
     messages: state.chatReducer.messages,
     socket: state.chatReducer.socket,
-    isMuted: state.chatReducer.isMuted,
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
     initConnection: () => dispatch(actions.initWebSocketConnection(dispatch)),
-    setOnlineUsers: (onlineUsers) =>
-      dispatch(actions.allOnlineUsers(onlineUsers)),
+    setUsers: (users) => dispatch(actions.AllUsers(users)),
     isConnected: (status) => dispatch(actions.isConnected(status)),
-    setIsMuteStatus: (status) => dispatch(actions.setIsMuteStatus(status)),
     setIsLoggedIn: (status) => dispatch(authActions.isSignedInUser(status)),
   };
 }

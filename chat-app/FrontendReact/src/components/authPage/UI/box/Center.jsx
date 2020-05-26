@@ -1,5 +1,4 @@
 import React from 'react'
-import CssBaseline from '@material-ui/core/CssBaseline';
 import Paper from '@material-ui/core/Paper';
 import withStyles from '@material-ui/core/styles/withStyles';
 
@@ -24,7 +23,6 @@ const styles = theme => ({
   },
   avatar: {
     margin: theme.spacing.unit,
-   // backgroundColor: theme.palette.secondary.main,
   },
   text: {
     textAlign: 'center'
@@ -35,7 +33,6 @@ const BoxCenter = ({classes, children}) => {
   return (
     <div>
       <main className={classes.main}>
-        <CssBaseline />
         <Paper className={classes.paper}>
           {children}
         </Paper>
