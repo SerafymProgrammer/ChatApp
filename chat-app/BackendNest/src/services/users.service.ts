@@ -1,40 +1,49 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '../models/users.model';
-import { UsersRepository } from '../repositories/users.repository';
-import * as bcrypt from 'bcrypt';
+import { Users } from '../models/users.model';
+import { InjectModel } from '@nestjs/sequelize';
+import { randomColor } from 'randomcolor';
+import { colorsHues } from '../constants/constants';
+import { getRandomInt } from '../helpers/helpers';
 
 @Injectable()
 export class UsersService {
   private saltRounds = 10;
-  constructor(private usersRepository: UsersRepository) {}
+  constructor(
+    @InjectModel(Users)
+    private userModel: typeof Users,
+  ) {}
 
-  getUsers(): Promise<User[]> {
-    return this.usersRepository.getUsers();
+  public getUsers(): Promise<Users[]> {
+    return this.userModel.findAll();
   }
 
-  getUser(_id: number): Promise<User> {
-    return this.usersRepository.getUser(_id);
-  }
-
-  getUserByNickName(nickName: string): Promise<User> {
-    return this.usersRepository.getUserByNickName(nickName);
-  }
-
-  getUsersByOnlineStatus(status: any): Promise<User[]> {
-    return this.usersRepository.getUsersByOnlineStatus(status);
-  }
-
-  async createUser(user: User) {
-    const newPassword =  await bcrypt.hash(user.password, this.saltRounds);
-    //const newUser = {...user}; //Object.assign({}, user);
-    return this.usersRepository.createUser({
-      ...user, 
-      id: null,
-      password: newPassword
+  public getUser(_id: number): Promise<Users> {
+    return this.userModel.findOne({
+      where: { id: _id },
     });
   }
 
-  async updateUser(_id: number, fiedsUpdated) {
-    return await this.usersRepository.updateUser(_id, fiedsUpdated);
+  public getUserByNickName(nickName: string): Promise<Users> {
+    return this.userModel.findOne({
+      where: { nickName },
+    });
+  }
+
+  public createUser(user: Users) {
+    return this.userModel.create({
+      id: null,
+      ...user,
+      nickNameColor: randomColor({
+        luminosity: 'dark',
+        hue: colorsHues[getRandomInt(0, 5)],
+      }),
+    });
+  }
+
+  public updateUser(_id: number, fieldsUpdated: {}) {
+    return this.userModel.update(fieldsUpdated, {
+      returning: true,
+      where: { id: _id },
+    });
   }
 }

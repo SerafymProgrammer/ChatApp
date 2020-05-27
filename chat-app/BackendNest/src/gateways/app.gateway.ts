@@ -6,65 +6,71 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Injectable } from '@nestjs/common';
-import { Socket } from 'socket.io';
-import { AuthService } from '../services/auth.service';
 import { UsersService } from '../services/users.service';
 import { ChatService } from '../services/chat.service';
 import moment = require('moment');
+import jwtDecode = require('jwt-decode');
+import { ClientWebSocket } from '../interfaces/inrterfaces';
+
+
 
 @Injectable()
 @WebSocketGateway()
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server;
   private clients = new Map();
-  private admins = [];
+  private admins = new Map();
   constructor(
-    private readonly authService: AuthService,
     private readonly usersService: UsersService,
     private readonly chatService: ChatService,
   ) {}
 
-  async handleConnection(client: Socket, ...args: any[]) {
-    const user = await this.authService.validateUserByToken(
-      client.handshake.query.token,
-    );
-    if (user === 'Token is not valid') {
+  async handleConnection(client: ClientWebSocket, ...args: any[]) {
+    const decodedUser = jwtDecode(client.handshake.query.token,);
+    if (!decodedUser) {
       client.emit('error', { status: 'error', msg: 'Invalid token' });
       client.disconnect();
       return;
     }
 
+    client.user = decodedUser;
+    let usersByIsAdmin =  (decodedUser.isAdmin ? this.clients : this.admins);
+    if (!usersByIsAdmin.has(decodedUser.id)) {
+      usersByIsAdmin.set(decodedUser.id, client);
+    }
 
-    client.user = user;
-    if (!this.clients.has(user.id)) {
-      this.clients.set(user.id, client);
-    }
-    if (client.user.isAdmin) {
-      this.admins.push(client);
-    }
-    await this.usersService.updateUser(user.id, { onlineStatus: true });
+    await this.usersService.updateUser(decodedUser.id, { onlineStatus: true });
+
     const allUsers = await this.usersService.getUsers();
     const onlineUsers = await allUsers.filter((user)=>user.onlineStatus)
-    const userForMuteStatus = await this.usersService.getUser(user.id);
+    const userForMuteStatus = await this.usersService.getUser(decodedUser.id);
     const allMessages = await this.chatService.getMessages();
 
-    client.broadcast.emit('users', onlineUsers);
-    client.emit('users', user.isAdmin ? allUsers : onlineUsers);
-    client.emit('initialMuteStatus', userForMuteStatus.isMuted);
-    client.emit('previousMessages', allMessages);
-    this.admins.forEach(admin => {
-     admin.emit('users', allUsers);
+    for (let admin of this.admins.values()) {
+      admin.emit('users', allUsers);
     }
-  }
-  
-  async handleDisconnect(client: Socket) {
-    if (client.user){
-    this.clients.delete(client.user.id);
+    for (let user of this.clients.values()) {
+      user.emit('users', onlineUsers);
     }
 
+    client.emit('initialMuteStatus', userForMuteStatus.isMuted);
+    client.emit('previousMessages', allMessages);
+  }
+  
+  async handleDisconnect(client: ClientWebSocket) {
+    (client.user.isAdmin ? this.clients : this.admins).delete(client.user.id);
     await this.usersService.updateUser(client.user.id, { onlineStatus: false });
+
     const allUsers = await this.usersService.getUsers();
-    client.broadcast.emit('users', allUsers);
+    const onlineUsers = await allUsers.filter((user)=>user.onlineStatus)
+
+    for (let admin of this.admins.values()) {
+      admin.emit('users', allUsers);
+    }
+
+    for (let user of this.clients.values()) {
+      user.emit('users', onlineUsers);
+    }
   }
 
   @SubscribeMessage('chat')
@@ -75,11 +81,14 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (allMessageByClient.length || moment().diff(lastMsg.timeMessage) < 15000) {
       return;
     }
-    this.chatService.createNewMessage(newMessage);
-      this.server.emit('chat', {
-        timeMessage: moment().toString(),
-        colorAuthorName: client.user.nickNameColor,
-      });
+
+    await this.chatService.createNewMessage(newMessage, client.user.nickName, client.user.nickNameColor);
+    this.server.emit('chat', {
+      textMessage: newMessage,
+      authorMessage: client.user.nickName,
+      timeMessage: moment().toString(),  // ?
+      colorAuthorName: client.user.nickNameColor,
+    });
   }
 
   @SubscribeMessage('mute')
@@ -88,13 +97,17 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     const socketUserForMute = this.clients.get(id);
-    if(socketUserForMute.user.isAdmin){
+    const userForMuteStatus = await this.usersService.getUser(id);
+    if(!socketUserForMute&&!userForMuteStatus || userForMuteStatus.isAdmin) {
+      client.emit('error', { status: 'error', msg: 'User does not exist or he is admin' });
+      client.disconnect();
       return;
     }
-    const userForMuteStatus = await this.usersService.getUser(id);
+    
     await this.usersService.updateUser(userForMuteStatus.id, {
       isMuted: !userForMuteStatus.isMuted,
     });
+
     const allUsers = await this.usersService.getUsers();
     client.emit('users', allUsers);
     if (socketUserForMute) {
@@ -107,18 +120,21 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!client.user.isAdmin){
       return;
     }
+
     const socketUserForBan = this.clients.get(id);
-    if(socketUserForBan.user.isAdmin){
+    const userForBanStatus = await this.usersService.getUser(id);
+    if(!socketUserForBan&&!userForBanStatus || userForBanStatus.isAdmin) {
+      client.emit('error', { status: 'error', msg: 'User does not exist' });
+      client.disconnect();
       return;
     }
-    const userForBanStatus = await this.usersService.getUser(id);
+    
     await this.usersService.updateUser(userForBanStatus.id, {
       isBaned: !userForBanStatus.isBaned,
     });
 
     const allUsers = await this.usersService.getUsers();
     client.emit('users', allUsers);
-
     if (socketUserForBan) {
       socketUserForBan.disconnect(true);
     }

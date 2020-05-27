@@ -1,13 +1,5 @@
 import { Table, Column, Model, PrimaryKey, AutoIncrement } from 'sequelize-typescript';
-
-export interface Message extends Model<Message>{
-  id: number;
-  textMessage: string;
-  authorMessage: string;
-  timeMessage: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import {Message} from '../interfaces/inrterfaces'
 
 @Table
 export class Messages extends Model<Message> {

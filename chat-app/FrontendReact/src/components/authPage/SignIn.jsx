@@ -6,9 +6,6 @@ import Typography from "@material-ui/core/Typography";
 import SignInForm from "./form/SignInForm";
 import * as actions from "../../redux/actions/authActions/auth.actions";
 import BoxCenter from "./UI/box/Center";
-import randomColor from "randomcolor";
-import { getRandomInt } from "../../services/helpers";
-import {colorsHues} from '../../constants'; 
 
 
 class SignIn extends Component {
@@ -17,24 +14,15 @@ class SignIn extends Component {
     this.state = {};
   }
 
-  async componentDidMount() {
-    let token = await localStorage.getItem("userToken");
-    if (token) {
-      window.location.href = "/chat";
-      return;
-    }
+  componentDidMount() {
+
   }
 
-  login({ id, username, password }) {
-
+  login({username, password}) {
     this.props
       .signIn({
         nickName: username,
         password: password,
-        nickNameColor: randomColor({
-          luminosity: "dark",
-          hue: colorsHues[getRandomInt(0, 5)],
-        }),
       })
       .catch((ex) => {
         alert(ex.message);
@@ -46,7 +34,7 @@ class SignIn extends Component {
       prevProps.isLoggedIn !== this.props.isLoggedIn &&
       this.props.isLoggedIn
     ) {
-      window.location.href = "/chat";
+      this.props.history.push("/chat");
     }
   }
 

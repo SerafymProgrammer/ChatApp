@@ -46,9 +46,7 @@ class SignInForm extends Component {
   };
 
   handleSubmit = () => {
-    let data = Object.assign({ id: null }, this.state);
-    this.reset();
-    this.props.handleSubmit(data);
+    this.props.handleSubmit(this.state);
   };
 
   render() {

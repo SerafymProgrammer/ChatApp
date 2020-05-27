@@ -1,20 +1,26 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { Message } from '../models/message.model';
-import { ChatRepository } from '../repositories/chat.repository';
+import { Injectable,  } from '@nestjs/common';
+import { Messages } from '../models/message.model';
+import { InjectModel } from '@nestjs/sequelize';
+import moment = require('moment');
 
 @Injectable()
 export class ChatService {
-  constructor(private chatRepository: ChatRepository) {}
+  constructor(@InjectModel(Messages)private messageModel: typeof Messages ) {}
 
-  async getMessages(): Promise<Message[]> {
-    return await this.chatRepository.getMessages();
+  public getMessages(): Promise<Messages[]> {
+    return this.messageModel.findAll<Messages>();
   }
 
-  async getMessagesByAuthor(authorName): Promise<Message[]> {
-    return await this.chatRepository.getMessagesByAuthor(authorName);
+  public getMessagesByAuthor(authorMessage: string): Promise<Messages[]> {
+    return this.messageModel.findAll<Messages>({
+      where: {
+        authorMessage,
+      },
+    });;
   }
 
-  async createNewMessage(msg: any) {
-    return await this.chatRepository.createNewMessage(msg);
+  createNewMessage(textMessage: string, authorMessage: string, nickNameColor: string) {
+    let timeMessage = moment().toString();
+    return this.messageModel.create({textMessage, authorMessage, nickNameColor, timeMessage});
   }
 }

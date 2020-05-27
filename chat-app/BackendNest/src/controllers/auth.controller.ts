@@ -5,14 +5,18 @@ import {
   Res,
   HttpStatus,
 } from '@nestjs/common';
-import { AuthService, VALIDATE_BANNED } from '../services/auth.service';
-import { User } from '../models/users.model';
+import { AuthService } from '../services/auth.service';
+import { User } from '../interfaces/inrterfaces';
 import { JwtService } from '@nestjs/jwt';
+import { Response } from 'express';
+import { UsersService } from '../services/users.service';
+import * as bcrypt from 'bcrypt';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
+    private usersService: UsersService,
     private jwtService: JwtService,
   ) {}
 
@@ -21,53 +25,26 @@ export class AuthController {
     const user = await this.usersService.getUserByNickName(userData.nickName);
 
     if (!user){
-      //this.chreateUser();
-      return { status: 422, msg: 'User not exitst' };
+      await this.usersService.createUser(userData);
+      const newUser = await this.usersService.getUserByNickName(userData.nickName);
+      const token = await this.authService.generateTokenForUser(newUser);
+      const {isAdmin, nickNameColor} = newUser;
+      return res.status(HttpStatus.OK).send({token, isAdmin, nickNameColor});
     }
 
     const isTruePassword = await bcrypt.compare(userData.password, user.password);
 
     if (isTruePassword) {
       res.status(HttpStatus.UNPROCESSABLE_ENTITY).send('Wrong password');
-      //return { status: 422, msg: 'Wrong password' };
     }
 
     if (user.isBaned) {
       res.status(HttpStatus.UNPROCESSABLE_ENTITY).send('Your are banned!');
-     // return { status: 422, msg: 'Your are banned!' };
     }
 
     const token = await this.authService.generateTokenForUser(userData);
 
     return res.status(HttpStatus.OK).send({token});
     
-    // ----
-    const user2 = await  this.authService.login(user);
-
-    if (!user2) {
-      return { status: 500, msg: 'Error login' };
-    }
-
-    return this.authService.login(user).then(async (userData: any) => {
-      if (userData === VALIDATE_BANNED) {
-        return { status: 500, msg: 'You are baned' };
-      }
-
-      if (userData === 'Passwords mismatch') {
-        return { status: 500, msg: 'Passwords mismatch' };
-      }
-
-      if (userData === '404') {
-        let token;
-        await this.authService.register(user);
-        await this.authService.login(user).then(async (userData: User) => {
-          token = await this.authService.generateTokenForUser(userData);
-        });
-        return Object.assign({ status: 200 }, token);
-      }
-
-      const token = await this.authService.generateTokenForUser(userData);
-      return Object.assign({ status: 200 }, token);
-    });
   }
 }

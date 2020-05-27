@@ -5,44 +5,41 @@ import {
   RequestMethod,
 } from '@nestjs/common';
 
-import { UsersService } from './services/users.service';
 import { LoggerMiddleware } from './common/logger.middleware';
 import { AuthService } from './services/auth.service';
 import { AuthController } from './controllers/auth.controller';
-import { HttpStrategy } from './common/http.strategy';
-import { UsersRepository } from './repositories/users.repository';
-import { databaseProviders } from './database.providers';
-import { usersProviders } from './providers/users.providers';
-import { JwtModule, JwtService } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
 import { AppGateway } from './gateways/app.gateway';
-
-import { ChatService } from './services/chat.service';
-import { ChatRepository } from './repositories/chat.repository';
-import { chatProviders } from './providers/chat.providers';
+import { SequelizeModule } from '@nestjs/sequelize';
+import { Messages } from './models/message.model';
+import { Users } from './models/users.model';
+import { UsersModule } from './modules/users.module';
+import { ChatModule } from './modules/chat.module';
 
 @Module({
   imports: [
+  UsersModule,
+  ChatModule,
+  SequelizeModule.forRoot({
+    dialect: 'mysql',
+    host: process.env.DB_HOST || 'localhost',
+    port: 3306,
+    username: 'root',
+    password: 'root',
+    database: 'ChatAppShema',
+    models: [Users, Messages],
+    autoLoadModels: true,
+    synchronize: true,
+    }),
+
     JwtModule.register({
-      secret: 'sdfaasad',
+      secret: 'x',
     }),
   ],
   controllers: [AuthController],
   providers: [
     AppGateway,
-
-    UsersService,
     AuthService,
-    ChatService,
-    HttpStrategy,
-
-    UsersRepository,
-    ChatRepository,
-
-    ...databaseProviders,
-
-    ...usersProviders,
-
-    ...chatProviders,
   ],
 })
 export class AppModule implements NestModule {

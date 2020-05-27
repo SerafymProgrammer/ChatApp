@@ -1,18 +1,5 @@
 import { Table, Column, Model, PrimaryKey, AutoIncrement } from 'sequelize-typescript';
-
-export interface User extends Model<User>{
-  id: number;
-  nickName: string;
-  password: string;
-  nickNameColor: string;
-  isAdmin: boolean;
-  onlineStatus: boolean;
-  isMuted: boolean;
-  isBaned: boolean;  
-  createdAt: Date;
-  updatedAt: Date;
-}
-
+import { User } from '../interfaces/inrterfaces';
 
 @Table
 export class Users extends Model<User> {

@@ -87,7 +87,7 @@ class ChatPage extends Component {
 
     socket.on("error", (res) =>{
       alert(res.msg);
-      window.location.href = '/login';
+      this.props.history.push('/login');
     });
 
     socket.on("initialMuteStatus", (IsMute) =>{
@@ -95,7 +95,6 @@ class ChatPage extends Component {
     });
 
     socket.on("mute", (IsMute) => {
-      this.props.setIsMuteStatus(IsMute);
       this.setState({ isMuted: IsMute });
     });
 
