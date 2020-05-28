@@ -1,5 +1,7 @@
+import * as actionTypes from '../../actions/chatActions/actions.types'
+
 const initialState = {
-  allUsers: [],
+  users: [],
   isConnected: false,
   socket: null,
   messages: [],
@@ -7,23 +9,23 @@ const initialState = {
 
 export default function chatReducer(state = initialState, action) {
   switch (action.type) {
-    case "ALL_USERS":
+    case actionTypes.USERS:
       return {
         ...state,
-        allUsers: action.allUsers,
+        users: action.users,
       };
 
-    case "IS_CONNECTED":
+    case actionTypes.IS_CONNECTED:
       return {
         ...state,
         isConnected: action.isConnected,
       };
-    case "SET_SOCKET":
+    case actionTypes.SET_SOCKET:
       return {
         ...state,
         socket: action.socket,
       };
-    case "ALL_MESSAGES":
+    case actionTypes.ALL_MESSAGES:
       return {
         ...state,
         messages: action.messages,

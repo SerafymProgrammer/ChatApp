@@ -41,7 +41,9 @@ class InputMessageForm extends Component {
   };
 
   handleSubmit = () => {
-    this.props.handleSubmit(this.state.message);
+    const newMsg = this.state.message;
+    this.reset();
+    this.props.handleSubmit(newMsg);
   };
 
   render() {

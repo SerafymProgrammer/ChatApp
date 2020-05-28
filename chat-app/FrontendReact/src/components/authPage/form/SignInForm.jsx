@@ -14,16 +14,10 @@ class SignInForm extends Component {
 
   componentDidMount() {
     ValidatorForm.addValidationRule("moreThanThreeChar", (value) => {
-      if (value.length < 3) {
-        return false;
-      }
-      return true;
+      return value.length < 3;
     });
     ValidatorForm.addValidationRule("notAllowedSpecialSymbols", (value) => {
-      if (/[^A-zА-яЁё0-9]/.test(value)) {
-        return false;
-      }
-      return true;
+      return /[^A-zА-яЁё0-9]/.test(value);
     });
   }
 

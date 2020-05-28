@@ -6,42 +6,28 @@ import * as actions from "../../redux/actions/chatActions/chat.actions";
 import * as authActions from "../../redux/actions/authActions/auth.actions";
 import { connect } from "react-redux";
 import { Container } from "@material-ui/core";
-import { styled } from "@material-ui/core/styles";
 import Header from "./chat-components/chatHeader";
-import jwt from 'jwt-decode';
+import { withStyles } from '@material-ui/core/styles';
+import store from 'store';
 
-const ChatContainer = styled(Container)({
-  background: "#6d81af",
-  display: "flex",
-  flexDirection: "row-reverse",
-  margin: 0,
-  padding: 0,
-  height: 800,
-  position: 'relative',
-  maxHeight: 1000,
-  "@media (max-height:900px)": {
-    height: 700,
-    maxHeight: 900,
-  },
-  "@media (max-height:800px)": {
-    height: 600,
-    maxHeight: 800,
-  },
-  "@media (max-height:700px)": {
-    height: 500,
-    maxHeight: 700,
-  },
-  "@media (max-height:600px)": {
-    height: 400,
-    maxHeight: 600,
-  },
-  "@media (max-height:500px)": {
-    height: 300,
-    maxHeight: 500,
-  },
-  "@media (max-height:400px)": {
-    height: 200,
-    maxHeight: 400,
+const styles = theme => ({
+  chatContainer: {
+    background: "#6d81af",
+    display: "flex",
+    flexDirection: "row-reverse",
+    margin: 0,
+    padding: 0,
+    height: 800,
+    position: 'relative',
+    maxHeight: 1000,
+    [theme.breakpoints.down('xs')]: {
+      height: 300,
+      maxHeight: 600,
+    },
+    [theme.breakpoints.down('sm')]: {
+      height: 600,
+      maxHeight: 800,
+    },
   },
 });
 
@@ -52,10 +38,9 @@ class ChatPage extends Component {
     this.state = {
       messages: [],
       isAdmin: false,
-      currentUser: "",
+      nickName: "",
       isMuted: false,
       showUsersContainer: true,
-      usersListMobile: false
     };
   }
 
@@ -64,13 +49,6 @@ class ChatPage extends Component {
   }
 
   async componentDidMount() {
-    let token = await localStorage.getItem("userToken");
-    if (!token) {
-      window.location.href = '/login';
-      return;
-    }
-    const decodedUser = jwt(token);
-    window.matchMedia("(max-width: 400px)").addListener((e)=>{ this.setState({usersListMobile: e.matches}); });
     await this.props.initConnection();
 
     const {socket} = this.props;
@@ -85,8 +63,8 @@ class ChatPage extends Component {
       })
     );
 
-    socket.on("error", (res) =>{
-      alert(res.msg);
+    socket.on("error", (msg) =>{
+      alert(msg);
       this.props.history.push('/login');
     });
 
@@ -105,14 +83,14 @@ class ChatPage extends Component {
     );
 
     socket.on("disconnect", (socket) => {
-      localStorage.removeItem("userToken");
-      window.location.href = '/login';
+      store.clearAll();
+      this.props.history.push('/login');
     });
-    
-    this.colorNickName = decodedUser.nickNameColor;
+    const {nickNameColor, isAdmin, nickName} = store.get('userData');
+    this.colorNickName = nickNameColor;
     this.setState({
-      isAdmin: decodedUser.isAdmin,
-      currentUser: decodedUser.nickName,
+      isAdmin,
+      nickName
     });
 
     this.props.isConnected(true);
@@ -131,20 +109,21 @@ class ChatPage extends Component {
   }
 
   async logout() {
-    await localStorage.removeItem("userToken");
+    store.clearAll();
     this.props.socket.disconnect(true);
-    window.location.href = '/login';
+    this.props.isSignedInUser(false);
+    this.props.history.push('/login');
   }
 
   render() {
 
-    const { isConnected, allUsers } = this.props;
-    const { isAdmin, currentUser, showUsersContainer, usersListMobile} = this.state;
+    const { isConnected, users, classes } = this.props;
+    const { isAdmin, nickName, showUsersContainer, messages} = this.state;
 
-    return isConnected && allUsers.length>0 ? (
+    return isConnected && users.length>0 ? (
       <Container style={{ display: "flex", flexDirection: "column" }}>
         <Header
-          username={currentUser}
+          username={nickName}
           colorNickName={this.colorNickName}
           showHideUsersList={() =>
             this.setState({
@@ -153,21 +132,20 @@ class ChatPage extends Component {
           }
           logout={() => this.logout()}
         />
-        <ChatContainer>
+        <Container className={classes.chatContainer}>
           <UsersList
-            users={allUsers}
+            users={users}
             isAdmin={isAdmin}
-            userName={currentUser}
+            userName={nickName}
             setMuteStatus={(user) => this.setMuteStatus(user)}
             setBan={(user) => this.setBan(user)}
             showUsersContainer={showUsersContainer}
-            usersListMobile = {usersListMobile}
           />
           <MessageContainer
-            messages={this.state.messages}
-            username={this.state.currentUser}
+            messages={messages}
+            username={nickName}
           />
-        </ChatContainer>
+        </Container>
         {!this.state.isMuted ? (
           <InputMessageForm handleSubmit={(message) => this.sendMsg(message)} />
         ) : null}
@@ -179,7 +157,7 @@ class ChatPage extends Component {
 function mapStateToProps(state) {
   return {
     isConnected: state.chatReducer.isConnected,
-    allUsers: state.chatReducer.allUsers,
+    users: state.chatReducer.users,
     messages: state.chatReducer.messages,
     socket: state.chatReducer.socket,
   };
@@ -188,10 +166,10 @@ function mapStateToProps(state) {
 function mapDispatchToProps(dispatch) {
   return {
     initConnection: () => dispatch(actions.initWebSocketConnection(dispatch)),
-    setUsers: (users) => dispatch(actions.AllUsers(users)),
+    setUsers: (users) => dispatch(actions.setUsers(users)),
     isConnected: (status) => dispatch(actions.isConnected(status)),
-    setIsLoggedIn: (status) => dispatch(authActions.isSignedInUser(status)),
+    isSignedInUser: (status) => dispatch(authActions.isSignedInUser(status)),
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(ChatPage);
+export default  connect(mapStateToProps, mapDispatchToProps)(withStyles(styles)(ChatPage));

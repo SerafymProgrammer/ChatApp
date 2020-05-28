@@ -22,10 +22,10 @@ import { ChatModule } from './modules/chat.module';
   ChatModule,
   SequelizeModule.forRoot({
     dialect: 'mysql',
-    host: process.env.DB_HOST || 'localhost',
+    host: 'localhost',
     port: 3306,
     username: 'root',
-    password: 'root',
+    password: 'qwertyui',
     database: 'ChatAppShema',
     models: [Users, Messages],
     autoLoadModels: true,

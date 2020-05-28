@@ -1,5 +1,11 @@
-import { Table, Column, Model, PrimaryKey, AutoIncrement } from 'sequelize-typescript';
-import {Message} from '../interfaces/inrterfaces'
+import {
+  Table,
+  Column,
+  Model,
+  PrimaryKey,
+  AutoIncrement,
+} from 'sequelize-typescript';
+import { Message } from '../interfaces/inrterfaces';
 
 @Table
 export class Messages extends Model<Message> {
@@ -24,5 +30,5 @@ export class Messages extends Model<Message> {
   createdAt: Date = new Date();
 
   @Column
-  updatedAt: Date = new Date(); 
+  updatedAt: Date = new Date();
 }

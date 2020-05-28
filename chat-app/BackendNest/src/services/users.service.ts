@@ -7,7 +7,7 @@ import { getRandomInt } from '../helpers/helpers';
 
 @Injectable()
 export class UsersService {
-  private saltRounds = 10;
+
   constructor(
     @InjectModel(Users)
     private userModel: typeof Users,
@@ -17,9 +17,9 @@ export class UsersService {
     return this.userModel.findAll();
   }
 
-  public getUser(_id: number): Promise<Users> {
+  public getUser(id: number): Promise<Users> {
     return this.userModel.findOne({
-      where: { id: _id },
+      where: { id },
     });
   }
 
@@ -40,10 +40,10 @@ export class UsersService {
     });
   }
 
-  public updateUser(_id: number, fieldsUpdated: {}) {
+  public updateUser(id: number, fieldsUpdated: {}) {
     return this.userModel.update(fieldsUpdated, {
       returning: true,
-      where: { id: _id },
+      where: { id },
     });
   }
 }

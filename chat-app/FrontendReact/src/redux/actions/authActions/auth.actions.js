@@ -1,16 +1,18 @@
 import AuthService from "../../../services/auth.service";
-
-export const isSignedInUser = (isLoggedIn) => {
-  return {
-    type: "IS_LOGGED_IN",
-    isLoggedIn,
-  };
-};
+import * as actionTypes from './actions.types';
+import store from 'store';
 
 export const setIsFetching = (isFetching) => {
   return {
-    type: "IS_FETCHING",
+    type: actionTypes.IS_FETCHING,
     isFetching,
+  };
+};
+
+export const isSignedInUser = (isLoggedIn) => {
+  return {
+    type: actionTypes.IS_LOGGED_IN,
+    isLoggedIn,
   };
 };
 
@@ -18,23 +20,15 @@ export function signIn(user) {
   return async (dispatch) => {
     await dispatch(setIsFetching(true));
     await AuthService.loginUser(user)
-      .then(async (response) => {
-        let a = await response.json();
-        return a;
-      })
-      .then((response) => {
-        if (response.status === 500) {
-          dispatch(setIsFetching(false));
-          alert(response.msg);
-        } else if (response.userToken && response.status === 200) {
-          localStorage.setItem("userToken", response.userToken);
-          dispatch(isSignedInUser(true));
-        } else {
-          throw new Error("Unknown error");
-        }
+      .then( (response) => {
+        const {token, isAdmin, nickNameColor, nickName} = response.data;
+        store.set("token", token);
+        store.set("userData", {isAdmin, nickName, nickNameColor});
+        dispatch(setIsFetching(false));
+        dispatch(isSignedInUser(true));
       })
       .catch((error) => {
-        alert(error.message);
+        alert(error.response.data);
         dispatch(setIsFetching(false));
       });
   };

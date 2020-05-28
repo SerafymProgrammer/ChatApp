@@ -1,8 +1,9 @@
 import SocketConnect from "../../../services/chat.service";
+import * as actionTypes from './actions.types'
 
 export function initWebSocketConnection(dispatch) {
   return async () => {
-    let token = await localStorage.getItem("userToken");
+    let token = await localStorage.getItem("token");
     let socket = new SocketConnect(token).getSocket();
 
     if (socket) {
@@ -13,28 +14,28 @@ export function initWebSocketConnection(dispatch) {
 
 export function setSocket(socket) {
   return {
-    type: "SET_SOCKET",
+    type: actionTypes.SET_SOCKET,
     socket,
   };
 }
 
-export function AllUsers(allUsers) {
+export function setUsers(users) {
   return {
-    type: "ALL_USERS",
-    allUsers,
+    type: actionTypes.USERS,
+    users,
   };
 }
 
 export function isConnected(isConnected) {
   return {
-    type: "IS_CONNECTED",
+    type: actionTypes.IS_CONNECTED,
     isConnected,
   };
 }
 
 export function allMessages(messages) {
   return {
-    type: "ALL_MESSAGES",
+    type: actionTypes.ALL_MESSAGES,
     messages,
   };
 }

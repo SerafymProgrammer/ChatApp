@@ -1,13 +1,8 @@
+import { URL_API } from "../environment";
+import axios from "axios";
 
 export default class AuthService {
-    static loginUser = async (user) => {
-      return fetch('http://localhost:3000/auth/login', {
-        method: 'POST',
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json'
-          },
-        body: JSON.stringify(user)
-      })
-    };
-  }
+  static loginUser = (user) => {
+    return axios.post(`${URL_API}/auth/login`, user)
+  };
+}

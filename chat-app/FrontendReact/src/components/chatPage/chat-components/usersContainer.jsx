@@ -19,21 +19,28 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: "#eabf7d8c",
     top: 0,
     left: 0,
+    [theme.breakpoints.down('xs')]: {
+      position: 'absolute', 
+      backgroundColor: "#8cd2b5", 
+      height: 300,
+      overflowY: 'scroll'
+    }
   },
   ul: {
     backgroundColor: "#eabf7d8c",
     padding: 0,
   },
+
 }));
 
 export default function UsersList(props) {
-  const { isAdmin, users, userName, setMuteStatus, setBan, showUsersContainer, usersListMobile} = props;
+  const { isAdmin, users, userName, setMuteStatus, setBan, showUsersContainer} = props;
   const handleMute = (user) => {
     setMuteStatus(user)
   }
 
-  const handleBan = (user) => {
-    setBan(user)
+  const handleBan = (id) => {
+    setBan(id)
   }
   
   const classes = useStyles();
@@ -48,11 +55,7 @@ export default function UsersList(props) {
   return (
     <List className={classes.root} subheader={<li />} 
       style={showUsersContainer ? 
-      Object.assign({display: 'block'}, 
-      usersListMobile ? 
-      {position: 'absolute', backgroundColor: "#8cd2b5", height: 300} : 
-      {position: 'initial'}) : 
-      {display: 'none'}}>
+      {display: 'block'}:{display: 'none'}}>
       {arr.map((status, index) => (
         <li key={`section-${index}`} className={classes.listSection}>
           <ul className={classes.ul}>
@@ -66,7 +69,7 @@ export default function UsersList(props) {
                     aria-label="small outlined button group"
                   >
                     <Button onClick={()=>handleMute(user)}> {user.isMuted ? 'unmute' : 'mute'}</Button>
-                    <Button onClick={()=>handleBan(user)}>{user.isBaned ? 'unban' : 'ban'}</Button>
+                    <Button onClick={()=>handleBan(user.id)}>{user.isBaned ? 'unban' : 'ban'}</Button>
                   </ButtonGroup>
                 ) : null}
               </ListItem>

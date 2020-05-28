@@ -60,8 +60,8 @@ class SignIn extends Component {
 
 function mapStateToProps(state) {
   return {
-    isLoggedIn: state.authReducer.isLoggedIn,
     isFetching: state.authReducer.isFetching,
+    isLoggedIn: state.authReducer.isLoggedIn,
   };
 }
 function mapDispatchToProps(dispatch) {

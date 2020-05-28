@@ -1,3 +1,5 @@
+import * as actionTypes from '../../actions/authActions/actions.types'
+
 const initialState = {
   isLoggedIn: false,
   allUsers: [],
@@ -7,12 +9,12 @@ const initialState = {
 
 export default function authReducer(state = initialState, action) {
   switch (action.type) {
-    case "IS_LOGGED_IN":
+    case actionTypes.IS_LOGGED_IN:
       return {
         ...state,
         isLoggedIn: action.isLoggedIn,
       };
-    case "IS_FETCHING":
+    case actionTypes.IS_FETCHING:
       return {
         ...state,
         isFetching: action.isFetching,
