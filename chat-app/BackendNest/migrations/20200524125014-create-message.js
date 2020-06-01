@@ -2,7 +2,7 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('Messages', {
-      id: {
+      messageid: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
@@ -19,6 +19,10 @@ module.exports = {
       },
       timeMessage: {
         type: Sequelize.STRING
+      },
+      roomId: {
+        foreignKey: true,
+        type: Sequelize.STRING,
       },
       createdAt: {
         allowNull: false,

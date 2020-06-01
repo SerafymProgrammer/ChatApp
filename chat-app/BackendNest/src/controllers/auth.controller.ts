@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Res, HttpStatus } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
-import { User } from '../interfaces/inrterfaces';
+import { Users } from '../models/users.model';
 import { Response } from 'express';
 import { UsersService } from '../services/users.service';
 import * as bcrypt from 'bcrypt';
@@ -14,7 +14,7 @@ export class AuthController {
   ) {}
 
   @Post('login')
-  async login(@Body() userData: User, @Res() res: Response) {
+  async login(@Body() userData: Users, @Res() res: Response) {
     const user = await this.usersService.getUserByNickName(userData.nickName);
 
     if (!user) {

@@ -1,96 +1,78 @@
-import React, { Component } from "react";
+import React, { useEffect, useCallback } from "react";
 import Button from "@material-ui/core/Button";
 import { ValidatorForm, TextValidator } from "react-material-ui-form-validator";
 import CircularProgress from "@material-ui/core/CircularProgress";
+import {useInput} from '../../hooks/useInput'
 
-class SignInForm extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      username: "",
-      password: "",
-    };
-  }
+const SignInForm = ({ isFetching, handleSubmit }) => {
 
-  componentDidMount() {
+  const { value:username, bind:bindUserName, reset:resetUserName } = useInput('');
+  const { value:password, bind:bindPassword, reset:resetPassword } = useInput('');
+
+  useEffect(() => {
     ValidatorForm.addValidationRule("moreThanThreeChar", (value) => {
-      return value.length < 3;
+      return value.length > 3;
     });
     ValidatorForm.addValidationRule("notAllowedSpecialSymbols", (value) => {
-      return /[^A-zА-яЁё0-9]/.test(value);
+      return !(/[^A-zА-яЁё0-9]/.test(value));
     });
-  }
 
-  componentWillUnmount() {
-    ValidatorForm.removeValidationRule("moreThanThreeChar");
-    ValidatorForm.removeValidationRule("notAllowedSpecialSymbols");
-  }
+    return () => {
+      ValidatorForm.removeValidationRule("moreThanThreeChar");
+      ValidatorForm.removeValidationRule("moreThanThreeChar");
+    }
+  }, [ValidatorForm]);
 
-  reset() {
-    this.setState((state) => ({
-      username: "",
-      password: "",
-    }));
-  }
 
-  handleChange = (event) => {
-    const value = event.target.value;
-    const field = event.target.name;
-    this.setState({ [field]: value });
-  };
+  const handleSubmitCallback = useCallback((evt) => {
+    evt.preventDefault();
+    handleSubmit({username, password});
+  }, [username, password, handleSubmit]);
 
-  handleSubmit = () => {
-    this.props.handleSubmit(this.state);
-  };
-
-  render() {
-    const { username, password } = this.state;
-    const { isFetching } = this.props;
-
-    return (
-      <ValidatorForm ref="form" onSubmit={this.handleSubmit}>
-        <TextValidator
-          fullWidth
-          label="Username"
-          onChange={this.handleChange}
-          name="username"
-          value={username}
-          validators={[
-            "required",
-            "moreThanThreeChar",
-            "notAllowedSpecialSymbols",
-          ]}
-          errorMessages={[
-            "this field is required",
-            "3 characters minimum",
-            "Not allowed special symbols",
-          ]}
-          margin="normal"
-        />
-        <TextValidator
-          fullWidth
-          label="Password"
-          type="password"
-          onChange={this.handleChange}
-          name="password"
-          value={password}
-          validators={["required"]}
-          errorMessages={["this field is required"]}
-          margin="normal"
-        />
-        <Button
-          variant="contained"
-          fullWidth
-          color="primary"
-          type="submit"
-          disabled={isFetching}
-          margin="normal"
-        >
-          {isFetching && <CircularProgress size={20} />} Sign In
-        </Button>
-      </ValidatorForm>
-    );
-  }
+  return (
+    <ValidatorForm  onSubmit={handleSubmitCallback}>
+      <TextValidator
+        fullWidth
+        label="Username"
+        name="username"
+        {...bindUserName}
+        validators={[
+          "required",
+          "moreThanThreeChar",
+          "notAllowedSpecialSymbols",
+        ]}
+        errorMessages={[
+          "this field is required",
+          "3 characters minimum",
+          "Not allowed special symbols",
+        ]}
+        margin="normal"
+      />
+      <TextValidator
+        fullWidth
+        label="Password"
+        type="password"
+        {...bindPassword}
+        name="password"
+        validators={["required"]}
+        errorMessages={["this field is required"]}
+        margin="normal"
+      />
+      <Button
+        variant="contained"
+        fullWidth
+        color="primary"
+        type="submit"
+        disabled={isFetching}
+        margin="normal"
+      >
+        {isFetching && <CircularProgress size={20} />} Sign In
+      </Button>
+    </ValidatorForm>
+  );
 }
+
+
+
 
 export default SignInForm;

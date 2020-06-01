@@ -15,4 +15,8 @@ export default  class SocketConnect {
   getSocket() {
     return this.socket;
   }
+
+  static changeExists() {
+    SocketConnect.exists = false;
+  }
 }

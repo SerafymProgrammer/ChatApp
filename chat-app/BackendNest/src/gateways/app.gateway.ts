@@ -8,6 +8,8 @@ import {
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
 import { ChatService } from '../services/chat.service';
+import { RoomsUsersService } from '../services/roomsUsers.service';
+import { RoomsService } from '../services/rooms.service';
 import moment = require('moment');
 import jwtDecode = require('jwt-decode');
 import { ClientWebSocket } from '../interfaces/inrterfaces';
@@ -19,10 +21,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server;
   private clients = new Map();
   private admins = new Map();
+  private rooms = new Map();
 
   constructor(
     private readonly usersService: UsersService,
     private readonly chatService: ChatService,
+    private readonly roomsUsersService: RoomsUsersService,
+    private readonly roomsService: RoomsService,
   ) {}
 
   async handleConnection(client: ClientWebSocket, ...args: any[]) {
@@ -37,14 +42,25 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.user = decodedUser;
 
     const clientsByIsAdmin = !decodedUser.isAdmin ? this.clients : this.admins;
+    const { userId } = decodedUser;
 
-    if (!clientsByIsAdmin.has(decodedUser.id)) {
-      clientsByIsAdmin.set(decodedUser.id, client);
+    if (!clientsByIsAdmin.has(userId)) {
+      clientsByIsAdmin.set(userId, client);
     }
 
-    await this.usersService.updateUser(decodedUser.id, { onlineStatus: true });
+    client.join('default');
 
-    const userForMuteStatus = await this.usersService.getUser(decodedUser.id);
+    const isExisted = await this.roomsUsersService.getRoomUser(
+      constants.ID_DEFAULT_ROOM,
+      userId,
+    );
+    if (!isExisted) {
+      this.roomsUsersService.createRoomUser(constants.ID_DEFAULT_ROOM, userId);
+    }
+
+    await this.usersService.updateUser(userId, { onlineStatus: true });
+
+    const userForMuteStatus = await this.usersService.getUser(userId);
     const allMessages = await this.chatService.getMessages();
 
     this.updateOnlineStatusUsers();
@@ -54,11 +70,12 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async handleDisconnect(client: ClientWebSocket) {
+    client.leave('default');
+    const { isAdmin, userId } = client.user;
     if (client.user) {
-      (!client.user.isAdmin ? this.clients : this.admins).delete(
-        client.user.id,
-      );
-      await this.usersService.updateUser(client.user.id, {
+      (!isAdmin ? this.clients : this.admins).delete(userId);
+
+      await this.usersService.updateUser(userId, {
         onlineStatus: false,
       });
     }
@@ -67,11 +84,19 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('chat')
   async onChat(client, newMessage) {
-    if (!client.user || newMessage.length > 200) {
+    const {textMessage, room} = newMessage; 
+    if (!client.user || textMessage > 200) {
+      return;
+    }
+    
+    const roomName = room ? room : 'default';
+    const isExistedRoom = await this.roomsService.getRoomByNameByMessages(roomName, client.user.userId);
+
+    if(!isExistedRoom) {
       return;
     }
 
-    const userMuteStatus = await this.usersService.getUser(client.user.id);
+    const userMuteStatus = await this.usersService.getUser(client.user.userId);
 
     if (userMuteStatus.isMuted) {
       return;
@@ -80,8 +105,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const allMessageByClient = await this.chatService.getMessagesByAuthor(
       client.user.nickName,
     );
-    if (allMessageByClient.length) {
-      const lastMsg = allMessageByClient[allMessageByClient.length - 1];
+    if (isExistedRoom.messages.length) {
+      const lastMsg = isExistedRoom.messages[isExistedRoom.messages.length - 1];
 
       if (moment().diff(lastMsg.timeMessage) < 15000) {
         return;
@@ -89,13 +114,13 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     const timeMessage = moment().toString();
     await this.chatService.createNewMessage(
-      newMessage,
+      textMessage,
       client.user.nickName,
       client.user.nickNameColor,
       timeMessage,
     );
-    this.server.emit('chat', {
-      textMessage: newMessage,
+    this.server.to(roomName).emit('chat', {
+      textMessage,
       authorMessage: client.user.nickName,
       timeMessage,
       colorAuthorName: client.user.nickNameColor,
@@ -112,7 +137,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.guardMuteBanAdmin(client, socketUserForMute, userForMuteStatus);
 
-    this.updateBanMuteStatusUsers(client, userForMuteStatus.id, {
+    this.updateBanMuteStatusUsers(client, userForMuteStatus.userId, {
       isMuted: !userForMuteStatus.isMuted,
     });
 
@@ -131,13 +156,83 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.guardMuteBanAdmin(client, socketUserForBan, userForBanStatus);
 
-    this.updateBanMuteStatusUsers(client, userForBanStatus, {
+    this.updateBanMuteStatusUsers(client, userForBanStatus.userId, {
       isBaned: !userForBanStatus.isBaned,
     });
 
     if (socketUserForBan) {
       socketUserForBan.disconnect(true);
     }
+  }
+
+  @SubscribeMessage('chatRoom')
+  async onChatRoom(client, id) {
+    if (!client.user.isAdmin) {
+      return;
+    }
+    const socketUserForBan = this.clients.get(id);
+    const userForBanStatus = await this.usersService.getUser(id);
+
+    this.guardMuteBanAdmin(client, socketUserForBan, userForBanStatus);
+
+    this.updateBanMuteStatusUsers(client, userForBanStatus.id, {
+      isBaned: !userForBanStatus.isBaned,
+    });
+
+    if (socketUserForBan) {
+      socketUserForBan.disconnect(true);
+    }
+  }
+
+  @SubscribeMessage('chatToServer')
+  handleMessage(
+    client,
+    message: { sender: string; room: string; message: string },
+  ) {
+    this.server.to(message.room).emit('chatToClient', message);
+  }
+
+  @SubscribeMessage('joinRoom')
+  async handleRoomJoin(client, id) {
+    const userForTalk = await this.usersService.getUser(id);
+    if (!userForTalk) {
+      return;
+    }
+
+    let newRoom;
+    const roomName = client.user.name + userForTalk.nickName;
+    const isExistedRoom = await this.roomsService.getRoomByName(roomName);
+
+    if (!isExistedRoom) {
+      newRoom = await this.roomsService.createNewRoom(roomName);
+      await this.roomsUsersService.createRoomUser(
+        newRoom.roomId,
+        client.user.id,
+      );
+      await this.roomsUsersService.createRoomUser(
+        newRoom.roomId,
+        userForTalk.userId,
+      );
+    }
+
+    // if (
+    //   !this.rooms.has(roomName) ||
+    //   !this.rooms.has(roomName)[client.user.userId] ||
+    //   !this.rooms.has(roomName)[userForTalk.userId]
+    // ) {
+    //   this.rooms.set(roomName, {
+    //     [client.user.userId]: client.user,
+    //     [userForTalk.userId]: userForTalk,
+    //   });
+    // }
+    client.join(roomName);
+  }
+
+  @SubscribeMessage('leaveRoom')
+  handleRoomLeave(client, room: string) {
+    // delete this.rooms.get(room)[client.user.userId];
+    client.leave(room);
+    //client.emit('leftRoom', room);
   }
 
   guardMuteBanAdmin(client, socket, user) {
@@ -151,7 +246,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async updateBanMuteStatusUsers(client, id, byThat) {
     await this.usersService.updateUser(id, byThat);
-
     const allUsers = await this.usersService.getUsers();
     client.emit('users', allUsers);
   }

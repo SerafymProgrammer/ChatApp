@@ -13,13 +13,17 @@ import { AppGateway } from './gateways/app.gateway';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { Messages } from './models/message.model';
 import { Users } from './models/users.model';
+import { Rooms } from './models/rooms.model';
+import { RoomsUsers } from './models/RoomsUsers.model';
 import { UsersModule } from './modules/users.module';
 import { ChatModule } from './modules/chat.module';
+import { RoomsModule } from './modules/rooms.module';
 
 @Module({
   imports: [
   UsersModule,
   ChatModule,
+  RoomsModule,
   SequelizeModule.forRoot({
     dialect: 'mysql',
     host: 'localhost',
@@ -27,7 +31,7 @@ import { ChatModule } from './modules/chat.module';
     username: 'root',
     password: 'qwertyui',
     database: 'ChatAppShema',
-    models: [Users, Messages],
+    models: [Users, Messages, Rooms, RoomsUsers],
     autoLoadModels: true,
     synchronize: true,
     }),

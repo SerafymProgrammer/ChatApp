@@ -33,14 +33,19 @@ const useStyles = makeStyles((theme) => ({
 
 }));
 
-export default function UsersList(props) {
-  const { isAdmin, users, userName, setMuteStatus, setBan, showUsersContainer} = props;
+const UsersList = (props) => {
+
+  const { isAdmin, users, userName, setMuteStatus, setBan, showUsersContainer, goToOneToOneRoome} = props;
   const handleMute = (user) => {
     setMuteStatus(user)
   }
 
   const handleBan = (id) => {
     setBan(id)
+  }
+
+  const handleGoToOneToOneRoome = (id) => {
+    goToOneToOneRoome(id)
   }
   
   const classes = useStyles();
@@ -63,13 +68,15 @@ export default function UsersList(props) {
             {usersCategories[status].map((user) => (
               <ListItem key={`${user.nickName}`}>
                 <ListItemText primary={`${user.nickName}`} style={{color: user.nickNameColor}}/>
+
+                <Button onClick={()=>handleGoToOneToOneRoome(user.userId)}> 1to1</Button>
                 {isAdmin && (user.nickName!==userName) ? (
                   <ButtonGroup
                     size="small"
                     aria-label="small outlined button group"
                   >
                     <Button onClick={()=>handleMute(user)}> {user.isMuted ? 'unmute' : 'mute'}</Button>
-                    <Button onClick={()=>handleBan(user.id)}>{user.isBaned ? 'unban' : 'ban'}</Button>
+                    <Button onClick={()=>handleBan(user.userId)}>{user.isBaned ? 'unban' : 'ban'}</Button>
                   </ButtonGroup>
                 ) : null}
               </ListItem>
@@ -80,3 +87,5 @@ export default function UsersList(props) {
     </List>
   );
 }
+
+export default UsersList;

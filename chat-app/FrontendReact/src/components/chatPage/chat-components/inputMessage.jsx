@@ -1,87 +1,60 @@
-import React, { Component } from "react";
+import React, { useEffect, useCallback } from "react";
 import { ValidatorForm, TextValidator } from "react-material-ui-form-validator";
 import IconButton from "@material-ui/core/IconButton";
 import SendIcon from "@material-ui/icons/Send";
+import { useInput } from "../../hooks/useInput";
+import { makeStyles } from "@material-ui/core/styles";
 
-class InputMessageForm extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      message: "",
-      isMobileWindow: false,
-    };
-  }
+const useStyles = makeStyles((theme) => ({
+  inputMsg: {
+    width: "50%",
 
-  componentDidMount() {
-    window.matchMedia("(max-width: 400px)").addListener((e) => {
-      this.setState({ isMobileWindow: e.matches });
-    });
+    [theme.breakpoints.down("xs")]: {
+      width: "100%",
+    },
+  },
+  formMsg: {
+    display: "flex",
+  },
+}));
+
+const InputMessageForm = (props) => {
+  const classes = useStyles();
+  const { value: message, bind: bindMessage, reset: resetMessage } = useInput("");
+
+  useEffect(() => {
     ValidatorForm.addValidationRule("maxSymbols", (value) => {
-      if (value.length > 200) {
-        return false;
-      }
-      return true;
+      return value.length < 200;
     });
-  }
 
-  componentWillUnmount() {
-    ValidatorForm.removeValidationRule("maxSymbols");
-  }
+    return () => {
+      ValidatorForm.removeValidationRule("maxSymbols");
+    };
+  }, [ValidatorForm]);
 
-  reset() {
-    this.setState((state) => ({
-      message: "",
-    }));
-  }
+  const handleSubmit = useCallback(() => {
+    const newMsg = message;
+    resetMessage();
+    props.handleSubmit(newMsg);
+  });
 
-  handleChange = (event) => {
-    const value = event.target.value;
-    const field = event.target.name;
-    this.setState({ [field]: value });
-  };
-
-  handleSubmit = () => {
-    const newMsg = this.state.message;
-    this.reset();
-    this.props.handleSubmit(newMsg);
-  };
-
-  render() {
-    const { message, isMobileWindow } = this.state;
-
-    return (
-      <ValidatorForm
-        ref="form"
-        onSubmit={this.handleSubmit}
-        style={{
-          display: "flex",
-        }}
-      >
-        <TextValidator
-          fullWidth
-          label="Message"
-          onChange={this.handleChange}
-          name="message"
-          value={message}
-          validators={["required", "maxSymbols"]}
-          errorMessages={["this field is required", "maximum 200 symbols"]}
-          margin="normal"
-          style={
-            isMobileWindow
-              ? {
-                  width: "100%",
-                }
-              : {
-                  width: "50%",
-                }
-          }
-        />
-        <IconButton aria-label="send" type="submit">
-          <SendIcon />
-        </IconButton>
-      </ValidatorForm>
-    );
-  }
-}
+  return (
+    <ValidatorForm onSubmit={handleSubmit} className={classes.form}>
+      <TextValidator
+        fullWidth
+        label="Message"
+        {...bindMessage}
+        name="message"
+        validators={["required", "maxSymbols"]}
+        errorMessages={["this field is required", "maximum 200 symbols"]}
+        margin="normal"
+        className={classes.inputMsg}
+      />
+      <IconButton aria-label="send" type="submit">
+        <SendIcon />
+      </IconButton>
+    </ValidatorForm>
+  );
+};
 
 export default InputMessageForm;

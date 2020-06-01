@@ -1,16 +1,18 @@
-import React, { Component } from "react";
+import React, { useEffect, useCallback, useState } from "react";
+import { useDispatch, useSelector, shallowEqual } from 'react-redux'
 import InputMessageForm from "./chat-components/inputMessage";
 import MessageContainer from "./chat-components/messageContainer";
 import UsersList from "./chat-components/usersContainer";
 import * as actions from "../../redux/actions/chatActions/chat.actions";
 import * as authActions from "../../redux/actions/authActions/auth.actions";
-import { connect } from "react-redux";
+import ChatService from "../../services/chat.service";
 import { Container } from "@material-ui/core";
 import Header from "./chat-components/chatHeader";
-import { withStyles } from '@material-ui/core/styles';
 import store from 'store';
 
-const styles = theme => ({
+import { makeStyles } from "@material-ui/core/styles";
+
+const useStyles = makeStyles((theme) => ({
   chatContainer: {
     background: "#6d81af",
     display: "flex",
@@ -29,147 +31,115 @@ const styles = theme => ({
       maxHeight: 800,
     },
   },
-});
+}));
 
-class ChatPage extends Component {
-  colorNickName = "white";
-  constructor(props) {
-    super(props);
-    this.state = {
-      messages: [],
-      isAdmin: false,
-      nickName: "",
-      isMuted: false,
-      showUsersContainer: true,
-    };
-  }
+const ChatPage = (props) => {
+  const classes = useStyles();
 
-  componentWillUnmount() {
-    this.props.isConnected(false);
-  }
+  const {nickNameColor, isAdmin, nickName} = store.get('userData');
+  let colorNickName = nickNameColor;
 
-  async componentDidMount() {
-    await this.props.initConnection();
+  const [messages, setMessages] = useState([]);
+  const [isCurrentUserAdmin, setIsAdmin] = useState(false);
+  const [currentUserNickName, setNickName] = useState("");
+  const [isMuted, setIsMuted] = useState(false);
+  const [showUsersContainer, setShowUsersContainer] = useState(true);
 
-    const {socket} = this.props;
+  const dispatch = useDispatch();
 
-    socket.on("users", (res) => {
-      this.props.setUsers(res);
-    });
+  const isConnected = useSelector(state => state.chatReducer.isConnected, shallowEqual);
+  const users = useSelector(state => state.chatReducer.users, shallowEqual);
+  const socket = useSelector(state => state.chatReducer.socket, shallowEqual);
 
-    socket.on("previousMessages", (res) =>
-      this.setState({
-        messages: res,
-      })
-    );
+  const initConnection = useCallback(
+    () => dispatch(actions.initWebSocketConnection(dispatch)),
+    [dispatch]
+  );
+  const setUsers = useCallback(
+    (user) => dispatch(actions.setUsers(user)),
+    [dispatch]
+  );
+  const setIsConnected = useCallback(
+    (status) => dispatch(actions.isConnected(status)),
+    [dispatch]
+  );
+  const isSignedInUser = useCallback(
+    (status) => dispatch(authActions.isSignedInUser(status)),
+    [dispatch]
+  );
+  const  logout = useCallback(() =>{
+    socket.disconnect(true);
+    disconnnectAndLogout();
+  });
+  const disconnnectAndLogout = useCallback(() => {
+    store.clearAll();
+    isSignedInUser(false);
+    ChatService.changeExists();
+    props.history.push('/login');
+  })
+
+  const setMuteStatus = (user) => socket.emit("mute", user.id);
+  const setBan = (id) => socket.emit("ban", id);
+  const sendMsg = useCallback((message) => socket.emit("chat", message));
+
+  useEffect(()=> {
+    initConnection();
+    if(socket) {
+    socket.on("users", (res) => setUsers(res));
+  
+    socket.on("previousMessages", (res) => setMessages(res));
 
     socket.on("error", (msg) =>{
       alert(msg);
-      this.props.history.push('/login');
+      props.history.push('/login');
     });
 
-    socket.on("initialMuteStatus", (IsMute) =>{
-      this.setState({ isMuted: IsMute });
-    });
+    socket.on("initialMuteStatus", (isMuted) =>setIsMuted(isMuted));
 
-    socket.on("mute", (IsMute) => {
-      this.setState({ isMuted: IsMute });
-    });
+    socket.on("mute", (isMuted) =>setIsMuted(isMuted));
 
-    socket.on("chat", (res) =>
-      this.setState({
-        messages: [...this.state.messages, res],
-      })
-    );
+    socket.on("chat", (msg) => setMessages([...messages, msg]));
 
     socket.on("disconnect", (socket) => {
-      store.clearAll();
-      this.props.history.push('/login');
+      disconnnectAndLogout();
     });
-    const {nickNameColor, isAdmin, nickName} = store.get('userData');
-    this.colorNickName = nickNameColor;
-    this.setState({
-      isAdmin,
-      nickName
-    });
+    setIsAdmin(isAdmin);
+    setNickName(nickName);
+    setIsConnected(true);
+   }
+   return ()=> setIsConnected(false);
+  }, [users, socket, messages])
 
-    this.props.isConnected(true);
-  }
 
-  setMuteStatus(user) {
-    this.props.socket.emit("mute", user.id);
-  }
 
-  setBan(id) {
-    this.props.socket.emit("ban", id);
-  }
-
-  sendMsg(message) {
-    this.props.socket.emit("chat", message);
-  }
-
-  async logout() {
-    store.clearAll();
-    this.props.socket.disconnect(true);
-    this.props.isSignedInUser(false);
-    this.props.history.push('/login');
-  }
-
-  render() {
-
-    const { isConnected, users, classes } = this.props;
-    const { isAdmin, nickName, showUsersContainer, messages} = this.state;
-
-    return isConnected && users.length>0 ? (
-      <Container style={{ display: "flex", flexDirection: "column" }}>
-        <Header
-          username={nickName}
-          colorNickName={this.colorNickName}
-          showHideUsersList={() =>
-            this.setState({
-              showUsersContainer: !this.state.showUsersContainer,
-            })
-          }
-          logout={() => this.logout()}
+  return isConnected && users.length>0 ? (
+    <Container style={{ display: "flex", flexDirection: "column" }}>
+      <Header
+        username={nickName}
+        colorNickName={colorNickName}
+        showHideUsersList={() => setShowUsersContainer(!showUsersContainer)}
+        logout={() => logout()}
+      />
+      <Container className={classes.chatContainer}>
+        <UsersList
+          users={users}
+          isAdmin={isCurrentUserAdmin}
+          userName={currentUserNickName}
+          setMuteStatus={(user) => setMuteStatus(user)}
+          setBan={(user) => setBan(user)}
+          showUsersContainer={showUsersContainer}
         />
-        <Container className={classes.chatContainer}>
-          <UsersList
-            users={users}
-            isAdmin={isAdmin}
-            userName={nickName}
-            setMuteStatus={(user) => this.setMuteStatus(user)}
-            setBan={(user) => this.setBan(user)}
-            showUsersContainer={showUsersContainer}
-          />
-          <MessageContainer
-            messages={messages}
-            username={nickName}
-          />
-        </Container>
-        {!this.state.isMuted ? (
-          <InputMessageForm handleSubmit={(message) => this.sendMsg(message)} />
-        ) : null}
+        <MessageContainer
+          messages={messages}
+          username={nickName}
+        />
       </Container>
-    ) : null;
-  }
+      {!isMuted ? (
+        <InputMessageForm handleSubmit={(message) => sendMsg(message)} />
+      ) : null}
+    </Container>
+  ) : null;
 }
 
-function mapStateToProps(state) {
-  return {
-    isConnected: state.chatReducer.isConnected,
-    users: state.chatReducer.users,
-    messages: state.chatReducer.messages,
-    socket: state.chatReducer.socket,
-  };
-}
 
-function mapDispatchToProps(dispatch) {
-  return {
-    initConnection: () => dispatch(actions.initWebSocketConnection(dispatch)),
-    setUsers: (users) => dispatch(actions.setUsers(users)),
-    isConnected: (status) => dispatch(actions.isConnected(status)),
-    isSignedInUser: (status) => dispatch(authActions.isSignedInUser(status)),
-  };
-}
-
-export default  connect(mapStateToProps, mapDispatchToProps)(withStyles(styles)(ChatPage));
+export default ChatPage;

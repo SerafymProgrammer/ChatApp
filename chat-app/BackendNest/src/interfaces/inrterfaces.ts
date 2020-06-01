@@ -7,16 +7,18 @@ export interface ClientWebSocket extends Socket {
 }
 
 export interface Message extends Model<Message> {
-  id: number;
+  messageId: number;
   textMessage: string;
-  authorMessage: string;
   timeMessage: string;
   createdAt: Date;
   updatedAt: Date;
+  authorMessage: User;
+  room: Room;
+  
 }
 
 export interface User extends Model<User> {
-  id: number;
+  userId: number;
   nickName: string;
   password: string;
   nickNameColor: string;
@@ -24,6 +26,15 @@ export interface User extends Model<User> {
   onlineStatus: boolean;
   isMuted: boolean;
   isBaned: boolean;
+  rooms: Room[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Room extends Model<Room> {
+  roomId: number;
+  messages: Message[];
+  users: User[];
   createdAt: Date;
   updatedAt: Date;
 }

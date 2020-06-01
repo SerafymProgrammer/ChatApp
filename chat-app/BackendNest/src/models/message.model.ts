@@ -4,15 +4,18 @@ import {
   Model,
   PrimaryKey,
   AutoIncrement,
+  ForeignKey,
+  BelongsTo,
 } from 'sequelize-typescript';
-import { Message } from '../interfaces/inrterfaces';
+import { Rooms } from './rooms.model';
+import { Users } from './users.model';
 
 @Table
-export class Messages extends Model<Message> {
+export class Messages extends Model<Messages> {
   @PrimaryKey
   @AutoIncrement
   @Column
-  id: number;
+  messageId: number;
 
   @Column
   textMessage: string;
@@ -25,6 +28,20 @@ export class Messages extends Model<Message> {
 
   @Column
   timeMessage: string;
+  
+  @ForeignKey(() => Rooms)
+  @Column
+  roomId: number;
+
+  @BelongsTo(() => Rooms)
+  room: Rooms;
+
+  @ForeignKey(() => Users)
+  @Column
+  userId: number;
+
+  @BelongsTo(() => Users)
+  user: Users;
 
   @Column
   createdAt: Date = new Date();
