@@ -20,6 +20,7 @@
     "moment": "^2.26.0",
     "randomcolor": "^0.5.4",
     "react": "^16.13.1",
+    "react-chat-elements": "^10.9.2",
     "react-dom": "^16.13.1",
     "react-material-ui-form-validator": "^2.0.10",
     "react-pure-loaders": "^3.0.1",

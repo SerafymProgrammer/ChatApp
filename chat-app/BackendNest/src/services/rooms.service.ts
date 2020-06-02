@@ -12,22 +12,8 @@ export class RoomsService {
     return this.roomModel.findAll<Rooms>();
   }
 
-  public getRoomByNameByUsers(roomName: string,): Promise<Rooms> {
-    return this.roomModel.findOne<Rooms>({
-      where: {
-        roomName,
-      },
-      include: [Users]
-    });
-  }
-
-  public getRoomByNameByMessages(roomName: string, id: number): Promise<Rooms> {
-    return this.roomModel.findOne<Rooms>({
-      where: {
-        roomName,
-      },
-      include: [{model: Messages, where: {userId: id}}]
-    });
+  public getRoomByThat(byThat: {}): Promise<Rooms> {
+    return this.roomModel.findOne<Rooms>(byThat);
   }
 
   public createNewRoom(roomName: string) {

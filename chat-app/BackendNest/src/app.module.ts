@@ -18,12 +18,14 @@ import { RoomsUsers } from './models/RoomsUsers.model';
 import { UsersModule } from './modules/users.module';
 import { ChatModule } from './modules/chat.module';
 import { RoomsModule } from './modules/rooms.module';
+import { RoomsUsersModule } from './modules/roomsUsers.module';
 
 @Module({
   imports: [
   UsersModule,
   ChatModule,
   RoomsModule,
+  RoomsUsersModule,
   SequelizeModule.forRoot({
     dialect: 'mysql',
     host: 'localhost',
@@ -43,7 +45,7 @@ import { RoomsModule } from './modules/rooms.module';
   controllers: [AuthController],
   providers: [
     AppGateway,
-    AuthService,
+    AuthService
   ],
 })
 export class AppModule implements NestModule {

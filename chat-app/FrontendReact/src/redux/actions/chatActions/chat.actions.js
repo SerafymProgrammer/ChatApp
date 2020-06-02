@@ -19,6 +19,13 @@ export function setSocket(socket) {
   };
 }
 
+export function setFocusRoom(roomName) {
+  return {
+    type: actionTypes.FOCUS_ROOM,
+    roomName,
+  };
+}
+
 export function setUsers(users) {
   return {
     type: actionTypes.USERS,

@@ -20,6 +20,7 @@ const MessageContainer = (props) => {
   const { messages, username } = props;
   const myRef = useRef(null);
   const classes = useStyles();
+  console.log(messages)
 
   useEffect(() => {
     myRef.current.scrollTop = myRef.current.scrollHeight;

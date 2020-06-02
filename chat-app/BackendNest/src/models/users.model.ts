@@ -34,7 +34,7 @@ export class Users extends Model<Users> {
   isBaned: boolean; 
    
   @BelongsToMany(() => Rooms, () => RoomsUsers)
-  authors: Rooms[];
+  rooms: Rooms[];
 
   @HasMany(() => Messages)
   messages: Messages[];

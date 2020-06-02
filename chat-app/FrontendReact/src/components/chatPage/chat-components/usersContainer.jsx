@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
@@ -36,8 +36,8 @@ const useStyles = makeStyles((theme) => ({
 const UsersList = (props) => {
 
   const { isAdmin, users, userName, setMuteStatus, setBan, showUsersContainer, goToOneToOneRoome} = props;
-  const handleMute = (user) => {
-    setMuteStatus(user)
+  const handleMute = (id) => {
+    setMuteStatus(id)
   }
 
   const handleBan = (id) => {
@@ -57,6 +57,8 @@ const UsersList = (props) => {
 
   let arr = isAdmin ? ["Online", "Offline"] : ["Online"];
 
+  
+
   return (
     <List className={classes.root} subheader={<li />} 
       style={showUsersContainer ? 
@@ -75,7 +77,7 @@ const UsersList = (props) => {
                     size="small"
                     aria-label="small outlined button group"
                   >
-                    <Button onClick={()=>handleMute(user)}> {user.isMuted ? 'unmute' : 'mute'}</Button>
+                    <Button onClick={()=>handleMute(user.userId)}> {user.isMuted ? 'unmute' : 'mute'}</Button>
                     <Button onClick={()=>handleBan(user.userId)}>{user.isBaned ? 'unban' : 'ban'}</Button>
                   </ButtonGroup>
                 ) : null}

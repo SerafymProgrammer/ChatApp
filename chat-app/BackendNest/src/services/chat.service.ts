@@ -23,12 +23,16 @@ export class ChatService {
     authorMessage: string,
     nickNameColor: string,
     timeMessage: string,
+    roomId: number,
+    userId: number,
   ) {
     return this.messageModel.create({
       textMessage,
       authorMessage,
       colorAuthorName: nickNameColor,
       timeMessage,
+      roomId,
+      userId
     });
   }
 }
