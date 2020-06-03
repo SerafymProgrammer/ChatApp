@@ -5,7 +5,8 @@ const initialState = {
   isConnected: false,
   socket: null,
   messages: [],
-  roomName: 'default',
+  focusRoom: 'default',
+  rooms: []
 };
 
 export default function chatReducer(state = initialState, action) {
@@ -15,6 +16,12 @@ export default function chatReducer(state = initialState, action) {
         ...state,
         users: action.users,
       };
+
+      case actionTypes.ROOMS:
+        return {
+          ...state,
+          rooms: action.rooms,
+        };  
 
     case actionTypes.IS_CONNECTED:
       return {
@@ -29,7 +36,7 @@ export default function chatReducer(state = initialState, action) {
     case actionTypes.FOCUS_ROOM:
       return {
         ...state,
-        roomName: action.roomName,
+        focusRoom: action.focusRoom,
       };
     case actionTypes.ALL_MESSAGES:
       return {

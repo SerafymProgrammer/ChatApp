@@ -19,10 +19,17 @@ export function setSocket(socket) {
   };
 }
 
-export function setFocusRoom(roomName) {
+export function setFocusRoom(focusRoom) {
   return {
     type: actionTypes.FOCUS_ROOM,
-    roomName,
+    focusRoom,
+  };
+}
+
+export function setRooms(rooms) {
+  return {
+    type: actionTypes.ROOMS,
+    rooms,
   };
 }
 

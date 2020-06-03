@@ -16,6 +16,7 @@ import { ClientWebSocket } from '../interfaces/inrterfaces';
 import * as constants from '../constants/constants';
 import { Messages } from '../models/message.model';
 import { Rooms } from '../models/rooms.model';
+import { Users } from '../models/users.model';
 
 @Injectable()
 @WebSocketGateway()
@@ -34,7 +35,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: ClientWebSocket, ...args: any[]) {
     const decodedUser = jwtDecode(client.handshake.query.token);
-    console.log('connect');
 
     if (!decodedUser) {
       client.emit('error', constants.TOKEN_ERROR);
@@ -48,16 +48,14 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const { userId } = decodedUser;
     const userWithRooms = await this.usersService.getUserByThat({
       where: { userId },
-      include: [{model:Rooms, include: [Messages]}],
+      include: [{model:Rooms, include: [Messages, Users], }],
     });
     const roomWithMessages = await this.roomsService.getRoomByThat({
       where: {
-        roomName: 'default',
+        roomId: constants.ID_DEFAULT_ROOM,
       },
       include: [Messages],
     });
-
-    console.log(roomWithMessages.roomId);
 
     if (!clientsByIsAdmin.has(userId)) {
       clientsByIsAdmin.set(userId, client);
@@ -84,6 +82,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.updateOnlineStatusUsers();
 
+    console.log(roomWithMessages)
+
+    client.emit('focusRoom', roomWithMessages);
     client.emit('rooms', userWithRooms.rooms);
     client.emit('initialMuteStatus', userForMuteStatus.isMuted);
     client.emit('previousMessages', roomWithMessages.messages);
@@ -109,14 +110,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    const roomName = room ? room : 'default';
     const isExistedRoom = await this.roomsService.getRoomByThat({
       where: {
-        roomName,
+        roomId: room.roomId,
       },
     });
-
-    console.log(isExistedRoom.roomId);
 
     if (!isExistedRoom) {
       return;
@@ -129,15 +127,12 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       },
     );
 
-      userWithMessagesAndMuteStatus.messages = userWithMessagesAndMuteStatus.messages
+    userWithMessagesAndMuteStatus.messages = userWithMessagesAndMuteStatus.messages
         ? userWithMessagesAndMuteStatus.messages.filter(
             msg => msg.roomId === isExistedRoom.roomId,
           )
         : [];
     
-
-    console.log(userWithMessagesAndMuteStatus);
-
     if (userWithMessagesAndMuteStatus.isMuted) {
       return;
     }
@@ -160,7 +155,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       isExistedRoom.roomId,
       client.user.userId,
     );
-    this.server.to(roomName).emit('chat', {
+    this.server.to(room.roomName).emit('chat', {
       textMessage,
       authorMessage: client.user.nickName,
       timeMessage,
@@ -210,77 +205,69 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  // @SubscribeMessage('chatRoom')
-  // async onChatRoom(client, id) {
-  //   if (!client.user.isAdmin) {
-  //     return;
-  //   }
-  //   const socketUserForBan = this.clients.get(id);
-  //   const userForBanStatus = await this.usersService.getUser(id);
-
-  //   this.guardMuteBanAdmin(client, socketUserForBan, userForBanStatus);
-
-  //   this.updateBanMuteStatusUsers(client, userForBanStatus.id, {
-  //     isBaned: !userForBanStatus.isBaned,
-  //   });
-
-  //   if (socketUserForBan) {
-  //     socketUserForBan.disconnect(true);
-  //   }
-  // }
-
-  // @SubscribeMessage('chatToServer')
-  // handleMessage(
-  //   client,
-  //   message: { sender: string; room: string; message: string },
-  // ) {
-  //   this.server.to(message.room).emit('chatToClient', message);
-  // }
-
   @SubscribeMessage('joinRoom')
-  async handleRoomJoin(client, id) {
-    const userForTalk = await this.usersService.getUserByThat({
-      where: { id },
+  async handleRoomJoin(client, userId) {
+
+    const userRequester = await this.usersService.getUserByThat({
+      where: { userId: client.user.userId },
+      include: [{model:Rooms, include:[Users, Messages]}]
     });
+
+    const userForTalk = await this.usersService.getUserByThat({
+      where: { userId },
+      include: [{model:Rooms, include:[Users, Messages]}]
+    });
+
     if (!userForTalk) {
       return;
     }
-
-    const roomName = client.user.name + userForTalk.nickName;
-    const isExistedRoom = await this.roomsService.getRoomByThat({
-      where: {
-        roomName,
-      },
-      include: [Messages],
+    
+    let isExistedRoom;
+    userRequester.rooms.forEach(room => {
+      let findedRoomById = userForTalk.rooms.find(elem => elem.roomId === room.roomId)
+      if(findedRoomById&&findedRoomById.roomId!==1){
+        isExistedRoom = room;
+      }
     });
 
+    // const isExistedRoom = userRequester.rooms.find(
+    //   item => item.roomId === userForTalk.rooms.find(elem => elem.roomId === item.roomId),
+    // );
     if (!isExistedRoom) {
-      let newRoom = await this.roomsService.createNewRoom(roomName);
+      let newRoom = await this.roomsService.createNewRoom(client.user.nickName + userForTalk.nickName);
       await this.roomsUsersService.createRoomUser(
         newRoom.roomId,
-        client.user.id,
+        client.user.userId,
       );
       await this.roomsUsersService.createRoomUser(
         newRoom.roomId,
         userForTalk.userId,
       );
+      this.joinUserInRoomAfterValidate(client, userId, newRoom);
     }
 
+    this.joinUserInRoomAfterValidate(client, userId, isExistedRoom);
+  }
+
+  async joinUserInRoomAfterValidate (client, userForTalkId, room) {
+    const userRequester = await this.usersService.getUserByThat({
+      where: { userId: client.user.userId },
+      include: [Rooms]
+    });
+    const userForTalk = await this.usersService.getUserByThat({
+      where: { userId: userForTalkId },
+      include: [Rooms]
+    });
+
+    client.emit('rooms', userRequester.rooms);
+    client.broadcast.emit('rooms', userForTalk.rooms);
+
     client.emit(
-      'previousMessages',
-      isExistedRoom.messages ? isExistedRoom.messages : [],
+      'previousMessages', room.messages ,
     );
-    // if (
-    //   !this.rooms.has(roomName) ||
-    //   !this.rooms.has(roomName)[client.user.userId] ||
-    //   !this.rooms.has(roomName)[userForTalk.userId]
-    // ) {
-    //   this.rooms.set(roomName, {
-    //     [client.user.userId]: client.user,
-    //     [userForTalk.userId]: userForTalk,
-    //   });
-    // }
-    client.join(roomName);
+
+    client.emit('focusRoom', room);
+    client.join(room.roomName);
   }
 
   @SubscribeMessage('leaveRoom')

@@ -22,11 +22,12 @@ export class UsersService {
     return this.userModel.findOne(byThat);
   }
 
-  public getUserByNickName(nickName: string): Promise<Users> {
-    return this.userModel.findOne({
-      where: { nickName },
-    });
-  }
+  // public getUserByNickName(nickName: string): Promise<Users> {
+  //   return this.userModel.findOne({
+  //     where: { nickName },
+  //     include: [Rooms]
+  //   });
+  // }
 
   public createUser(user: Users) {
     return this.userModel.create({

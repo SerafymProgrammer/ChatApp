@@ -5,17 +5,21 @@ import { Response } from 'express';
 import { UsersService } from '../services/users.service';
 import * as bcrypt from 'bcrypt';
 import * as constants from '../constants/constants';
+import { RoomsUsersService } from '../services/roomsUsers.service';
+import { Rooms } from '../models/rooms.model';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
     private usersService: UsersService,
+    private roomsUsersService: RoomsUsersService,
   ) {}
 
   @Post('login')
   async login(@Body() userData: Users, @Res() res: Response) {
-    const user = await this.usersService.getUserByNickName(userData.nickName);
+    
+    const user = await this.usersService.getUserByThat({where: {nickName: userData.nickName}, include: [Rooms] });
 
     if (!user) {
       if (!this.authService.validateNickName(userData.nickName)) {
@@ -27,6 +31,10 @@ export class AuthController {
         userData.password,
       );
       const newUser = await this.usersService.createUser(userData);
+      await this.roomsUsersService.createRoomUser(
+        constants.ID_DEFAULT_ROOM, 
+        newUser.userId,
+      );
       return this.sendOk(newUser, res);
     }
 

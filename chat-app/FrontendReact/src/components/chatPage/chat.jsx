@@ -9,8 +9,9 @@ import ChatService from "../../services/chat.service";
 import { Container } from "@material-ui/core";
 import Header from "./chat-components/chatHeader";
 import store from "store";
-import { ChatList } from "react-chat-elements";
 import { makeStyles } from "@material-ui/core/styles";
+
+import DrawerChatRooms from './chat-components/drawerRooms'
 
 const useStyles = makeStyles((theme) => ({
   chatContainer: {
@@ -48,6 +49,8 @@ const ChatPage = (props) => {
   const [isMuted, setIsMuted] = useState(false);
   const [showUsersContainer, setShowUsersContainer] = useState(true);
   const [showRoomsContainer, setShowRoomsContainer] = useState(false);
+ 
+
   const dispatch = useDispatch();
 
   const isConnected = useSelector(
@@ -56,11 +59,11 @@ const ChatPage = (props) => {
   );
   const users = useSelector((state) => state.chatReducer.users, shallowEqual);
   const socket = useSelector((state) => state.chatReducer.socket, shallowEqual);
-  const roomName = useSelector(
-    (state) => state.chatReducer.roomName,
+  const focusRoom = useSelector(
+    (state) => state.chatReducer.focusRoom,
     shallowEqual
   );
-
+    console.log(focusRoom)
   const initConnection = useCallback(
     () => dispatch(actions.initWebSocketConnection(dispatch)),
     [dispatch]
@@ -68,6 +71,14 @@ const ChatPage = (props) => {
   const setUsers = useCallback((user) => dispatch(actions.setUsers(user)), [
     dispatch,
   ]);
+  const setRooms = useCallback((rooms) => dispatch(actions.setRooms(rooms)), [
+    dispatch,
+  ]);
+
+  const setFocusRoom = useCallback((room) => dispatch(actions.setFocusRoom(room)), [
+    dispatch,
+  ]);
+
   const setIsConnected = useCallback(
     (status) => dispatch(actions.isConnected(status)),
     [dispatch]
@@ -86,17 +97,18 @@ const ChatPage = (props) => {
     ChatService.changeExists();
     props.history.push("/login");
   });
-
+  
+  const goToOneToOneRoome = (id) => {debugger; socket.emit("joinRoom", id)};
   const setMuteStatus = (id) => socket.emit("mute", id);
   const setBan = (id) => socket.emit("ban", id);
-  const sendMsg = useCallback((textMessage) => socket.emit("chat", {textMessage, roomName}));
+  const sendMsg = useCallback((textMessage) => { debugger; socket.emit("chat", {textMessage, room: focusRoom})});
 
   useEffect(() => {
     initConnection();
     if (socket) {
       socket.on("users", (res) => setUsers(res));
 
-      socket.on("previousMessages", (res) => setMessages(res));
+      socket.on("previousMessages", (res) => res ? setMessages(res) : setMessages([]));
 
       socket.on("error", (msg) => {
         alert(msg);
@@ -105,8 +117,13 @@ const ChatPage = (props) => {
 
       socket.on("initialMuteStatus", (isMuted) => setIsMuted(isMuted));
 
-      socket.on("rooms", (res) => {
-        
+      socket.on("rooms", (rooms) => {
+        setRooms(rooms);
+      });
+
+      socket.on("focusRoom", (room) => {
+        debugger
+        setFocusRoom(room);
       });
 
       socket.on("mute", (isMuted) => setIsMuted(isMuted));
@@ -129,49 +146,28 @@ const ChatPage = (props) => {
         username={nickName}
         colorNickName={colorNickName}
         showHideUsersList={() => setShowUsersContainer(!showUsersContainer)}
+        setShowRoomsContainer={() => setShowRoomsContainer(!showRoomsContainer)}
         logout={() => logout()}
       />
-      {roomName === "default" ? (
-        <Container className={classes.chatContainer}>
-          {/* <ChatList
-            className="chatList"
-            dataSource={[
-              {
-                title: "Facebook",
-                subtitle: "What are you doing?",
-                date: new Date(),
-                unread: 0,
-              },
-              {
-                title: "Facebook",
-                subtitle: "What are you doing?",
-                date: new Date(),
-                unread: 0,
-              },
-              {
-                title: "Facebook",
-                subtitle: "What are you doing?",
-                date: new Date(),
-                unread: 0,
-              },
-            ]}
-            onClick={()=>alert('sdfsfds')}
-          /> */}
-          <UsersList
-            users={users}
-            isAdmin={isCurrentUserAdmin}
-            userName={currentUserNickName}
-            setMuteStatus={(user) => setMuteStatus(user)}
-            setBan={(user) => setBan(user)}
-            showUsersContainer={showUsersContainer}
-          />
-          <MessageContainer messages={messages} username={nickName} />
-        </Container>
-      ) : (
-        <Container className={classes.chatContainer}>
-          <MessageContainer messages={messages} username={nickName} />
-        </Container>
-      )}
+
+      <Container className={classes.chatContainer}>
+        <UsersList
+          users={users}
+          isAdmin={isCurrentUserAdmin}
+          userName={currentUserNickName}
+          setMuteStatus={(user) => setMuteStatus(user)}
+          setBan={(user) => setBan(user)}
+          showUsersContainer={showUsersContainer}
+          goToOneToOneRoome={goToOneToOneRoome}
+        />
+        <MessageContainer messages={messages} username={nickName} />
+        <DrawerChatRooms
+          goToOneToOneRoome={goToOneToOneRoome}
+          showRoomsContainer={showRoomsContainer}
+          setShowRoomsContainer={setShowRoomsContainer}
+          currentUserName = {currentUserNickName}
+        />
+      </Container>
       {!isMuted ? (
         <InputMessageForm handleSubmit={(message) => sendMsg(message)} />
       ) : null}

@@ -37,7 +37,7 @@ export default function Header(props) {
       <AppBar position="static">
         <Toolbar>
           <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
-            <MenuIcon onClick={props.showHideUsersList}/>
+            <MenuIcon onClick={props.setShowRoomsContainer}/>
           </IconButton>
           <Typography variant="h6" className={classes.title} style={{color: props.colorNickName}}>
             {props.username}
