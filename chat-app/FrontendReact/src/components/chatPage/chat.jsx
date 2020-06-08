@@ -98,7 +98,7 @@ const ChatPage = (props) => {
     props.history.push("/login");
   });
   
-  const goToOneToOneRoome = (id) => {debugger; socket.emit("joinRoom", id)};
+  const goToOneToOneRoome = (id) => {socket.emit("leaveRoom", focusRoom.roomName); socket.emit("joinRoom", id)};
   const setMuteStatus = (id) => socket.emit("mute", id);
   const setBan = (id) => socket.emit("ban", id);
   const sendMsg = useCallback((textMessage) => { debugger; socket.emit("chat", {textMessage, room: focusRoom})});

@@ -12,3 +12,5 @@ export const  ERROR_MUTE_BAN_REQ = 'User does not exist or he is admin';
 export const ERROR_NICKNAME_VALIDATE = 'Special symbols not allowed';
 
 export const ID_DEFAULT_ROOM = 1;
+
+export const NAME_DEFAULT_ROOM = 'default';
