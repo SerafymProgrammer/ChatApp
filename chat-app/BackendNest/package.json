@@ -34,7 +34,7 @@
     "@types/bluebird": "^3.5.32",
     "@types/validator": "^13.0.0",
     "apollo-server-express": "^2.7.0",
-    "bcrypt": "^3.0.6",
+    "bcrypt": "^5.0.0",
     "bcrypt-nodejs": "0.0.3",
     "dataloader": "^1.4.0",
     "graphql": "^14.4.2",
